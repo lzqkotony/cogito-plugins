@@ -1,0 +1,29 @@
+name: ${project.name}
+version: '${project.version}'
+main: com.seewo.cogito.CogitoPlugin
+api-version: '1.21'
+description: ${project.description}
+authors: [seewo]
+softdepend: [Vault]
+
+commands:
+  enkephalin:
+    description: 查看或管理脑啡肽
+    usage: /enkephalin [give|take|info|reload]
+    aliases: [enk]
+    permission: cogito.use
+    permission-message: 你没有权限使用该命令
+  exchange:
+    description: 用钱兑换脑啡肽（单向）
+    usage: /exchange [数量]
+    aliases: [exch]
+    permission: cogito.use
+    permission-message: 你没有权限使用该命令
+
+permissions:
+  cogito.use:
+    description: 使用脑啡肽相关命令
+    default: true
+  cogito.admin:
+    description: 给予/扣除脑啡肽、重载配置
+    default: op
