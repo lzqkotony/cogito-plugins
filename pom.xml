@@ -11,6 +11,27 @@
     <name>Cogito</name>
     <description>脑叶服务器核心玩法插件（脑啡肽经济 / E.G.O 开发）</description>
 
+    <licenses>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>lzqkotony</id>
+            <url>https://github.com/lzqkotony</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/lzqkotony/cogito-plugins.git</connection>
+        <developerConnection>scm:git:git@github.com:lzqkotony/cogito-plugins.git</developerConnection>
+        <url>https://github.com/lzqkotony/cogito-plugins</url>
+    </scm>
+
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

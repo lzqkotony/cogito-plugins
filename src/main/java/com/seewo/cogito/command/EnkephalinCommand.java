@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 lzqkotony
+
 package com.seewo.cogito.command;
 
 import com.seewo.cogito.CogitoPlugin;
