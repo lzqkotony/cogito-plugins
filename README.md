@@ -5,6 +5,7 @@
 > A Paper plugin for the "Brain Leaf" style server gameplay: an **Enkephalin** item economy wired to **Vault**.
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/lzqkotony/cogito-plugins?include_prereleases&label=release)](https://github.com/lzqkotony/cogito-plugins/releases)
 [![Paper](https://img.shields.io/badge/Paper-1.21.11-orange.svg)](https://papermc.io)
 [![Java](https://img.shields.io/badge/Java-21-red.svg)](https://adoptium.net)
 
@@ -33,7 +34,7 @@ Cogito 把「脑叶」玩法的第一层——**脑啡肽**——做成了一套
 
 ## 安装
 
-1. 下载 `Cogito-x.y.z.jar`（Releases 页面，或用下方命令自行构建）
+1. 从 [Releases](https://github.com/lzqkotony/cogito-plugins/releases) 下载最新的 `Cogito-x.y.z.jar`（也可以按下方说明自行构建）
 2. 放进服务端的 `plugins/` 目录
 3. 确保服务端已安装 **Vault + 经济插件**
 4. 重启服务端（或执行 `/reload confirm`）
@@ -84,7 +85,7 @@ economy:
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.1.0-SNAPSHOT.jar
+mvn clean package                       # 产物：target/Cogito-0.1.0-BETA.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -108,7 +109,7 @@ src/main/java/com/seewo/cogito/
 
 | 版本 | 内容 | 状态 |
 | --- | --- | --- |
-| v0.1 | 脑啡肽实体物品 + Vault 兑换 + 管理命令 | ✅ 已完成 |
+| v0.1 | 脑啡肽实体物品 + Vault 兑换 + 管理命令 | ✅ 已发布 0.1 Beta |
 | v0.2 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 🚧 计划中 |
 | v0.3 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%）失败率） | 📋 计划中 |
 | v0.4 | 随机 E.G.O 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
