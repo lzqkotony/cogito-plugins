@@ -3,13 +3,18 @@
 
 package com.seewo.cogito;
 
+import com.seewo.cogito.command.CogitoCommand;
 import com.seewo.cogito.command.EnkephalinCommand;
 import com.seewo.cogito.command.ExchangeCommand;
 import com.seewo.cogito.economy.VaultHook;
+import com.seewo.cogito.gui.EnkephalinMenu;
+import com.seewo.cogito.gui.MenuListener;
 import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.listener.PlayerJoinListener;
+import com.seewo.cogito.text.Messages;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -40,7 +45,9 @@ public final class CogitoPlugin extends JavaPlugin {
 
         registerCommand("enkephalin", new EnkephalinCommand(this));
         registerCommand("exchange", new ExchangeCommand(this));
+        registerCommand("cogito", new CogitoCommand(this));
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new MenuListener(this), this);
 
         getLogger().info("已启用：脑啡肽物品 = " + enkephalinItem.material()
                 + "（标签 " + enkephalinItem.tagKey().getKey() + "）");
@@ -62,6 +69,19 @@ public final class CogitoPlugin extends JavaPlugin {
         reloadConfig();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook.setup();
+    }
+
+    /**
+     * 打开「脑啡肽箱子」箱子界面（/cogito gui）。
+     *
+     * <p>每次打开都新建一个菜单实例——菜单的 InventoryHolder 就是那个实例本身。
+     */
+    public void openBox(Player player) {
+        if (!getConfig().getBoolean("gui.enabled", true)) {
+            Messages.send(player, "<red>箱子界面已被配置关闭（gui.enabled: false）");
+            return;
+        }
+        new EnkephalinMenu(this, player).open(player);
     }
 
     private void registerCommand(String name, TabExecutor executor) {

@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
 public final class EnkephalinCommand implements TabExecutor {
 
     private static final String PERMISSION_ADMIN = "cogito.admin";
-    private static final List<String> SUB_COMMANDS = List.of("give", "take", "info", "reload");
+    private static final List<String> SUB_COMMANDS = List.of("box", "give", "take", "info", "reload");
 
     private final CogitoPlugin plugin;
 
@@ -33,6 +33,9 @@ public final class EnkephalinCommand implements TabExecutor {
         }
 
         switch (args[0].toLowerCase(Locale.ROOT)) {
+            case "box", "gui" -> {
+                return openBox(sender);
+            }
             case "give" -> {
                 return change(sender, label, args, true);
             }
@@ -59,6 +62,16 @@ public final class EnkephalinCommand implements TabExecutor {
         }
         int amount = plugin.enkephalinItem().count(player);
         Messages.send(player, "你当前持有 <white>" + amount + "</white> 个脑啡肽");
+        return true;
+    }
+
+    /** /enkephalin box —— 跟 /cogito gui 一样，打开箱子界面。 */
+    private boolean openBox(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            Messages.send(sender, "<red>箱子界面只能在游戏里打开");
+            return true;
+        }
+        plugin.openBox(player);
         return true;
     }
 
@@ -134,6 +147,7 @@ public final class EnkephalinCommand implements TabExecutor {
     private void sendUsage(CommandSender sender, String label) {
         Messages.raw(sender, "<gray>—— 脑啡肽 ——");
         Messages.raw(sender, "<yellow>/" + label + " <gray>- 查看自己持有的数量");
+        Messages.raw(sender, "<yellow>/" + label + " box <gray>- 打开脑啡肽箱子（GUI）");
         Messages.raw(sender, "<yellow>/exchange <数量> <gray>- 用钱兑换脑啡肽");
         if (sender.hasPermission(PERMISSION_ADMIN)) {
             Messages.raw(sender, "<yellow>/" + label + " give <玩家> <数量> <gray>- 发放");

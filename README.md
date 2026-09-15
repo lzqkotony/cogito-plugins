@@ -17,6 +17,7 @@ Cogito 把「脑叶」玩法的第一层——**脑啡肽**——做成了一套
 
 - **脑啡肽实体物品**：带 `PersistentDataContainer` NBT 标签的附魔绿宝石块（材质、名称、Lore、附魔、光效、CustomModelData 全部走配置）
 - **Vault 经济兑换**：`/exchange` 用服务器货币按 100:1 单向兑换脑啡肽（价格可配）
+- **箱子 GUI**：`/cogito gui` 打开箱子样式的菜单，看持有量 / 余额，点按钮直接兑换（物品锁死，拿不走）
 - **准确的背包统计**：识别只看 NBT 标签，玩家改名、附魔、堆叠都不会失效，也无法伪造
 - **完整的管理命令**：发放 / 扣除 / 查看配置 / 热重载，带 Tab 补全与权限节点
 - **中文友好**：所有文案走 MiniMessage（支持渐变、颜色），配置与日志使用 UTF-8
@@ -52,11 +53,14 @@ Cogito 把「脑叶」玩法的第一层——**脑啡肽**——做成了一套
 | 命令 | 说明 | 权限 | 默认 |
 | --- | --- | --- | --- |
 | `/enkephalin`（`/enk`） | 查看自己持有的脑啡肽数量 | `cogito.use` | 所有人 |
+| `/cogito gui`（`/cog`、`/box`） | 打开脑啡肽箱子（GUI 菜单） | `cogito.use` | 所有人 |
+| `/enkephalin box` | 同上，打开箱子界面 | `cogito.use` | 所有人 |
 | `/exchange [数量]`（`/exch`） | 用钱兑换脑啡肽，单向不可逆 | `cogito.use` | 所有人 |
 | `/enkephalin give <玩家> <数量>` | 发放脑啡肽 | `cogito.admin` | OP |
 | `/enkephalin take <玩家> <数量>` | 扣除脑啡肽 | `cogito.admin` | OP |
 | `/enkephalin info` | 查看当前物品与经济配置 | `cogito.admin` | OP |
 | `/enkephalin reload` | 重载 `config.yml` | `cogito.admin` | OP |
+| `/cogito reload` | 同上，管理员重载配置 | `cogito.admin` | OP |
 
 ## 配置
 
@@ -76,7 +80,28 @@ enkephalin:
 economy:
   price-per-enkephalin: 100        # 每个脑啡肽需要多少「钱」
   max-per-exchange: 64             # 单次兑换上限
+
+gui:
+  enabled: true                    # 关掉后 /cogito gui 会提示已关闭
+  title: "<gradient:#22d3a8:#3b82f6>脑啡肽箱子</gradient>"
+  rows: 5                          # 界面固定按 5 行布局，写小会自动按 5 行处理
+  exchange-amounts: [1, 8, 64]     # 三个兑换按钮的档位，超过 max-per-exchange 会被截断
 ```
+
+### 箱子 GUI 布局（5 行 45 格）
+
+| 槽位 | 内容 |
+| --- | --- |
+| 11 / 15 / 21 | 兑换按钮 ×1 / ×8 / ×64（档位来自 `gui.exchange-amounts`） |
+| 13 | 脑啡肽信息：当前持有量、兑换单价、单次上限 |
+| 23 | 我的余额：经济插件名、余额、还能兑换几个，点击刷新 |
+| 30 | 命令帮助（点击后关掉箱子，在聊天栏列出命令） |
+| 32 / 34 | 管理：配置信息 / 管理：重载配置（仅 `cogito.admin` 可见） |
+| 40 | 关闭 |
+| 其余 | 黑色玻璃板边框 |
+
+菜单里的物品都是「幽灵物品」：点击会被取消，拿不走、拖不动，也没法用 shift 搬进背包
+（不做这一步的话，shift 点击会把真物品塞进菜单，关掉界面就丢了）。
 
 > 物品身份由 NBT 标签 `cogito:enkephalin` 决定，**改名称/Lore 不会让已有脑啡肽失效**（`material` 保持不变即可）。
 

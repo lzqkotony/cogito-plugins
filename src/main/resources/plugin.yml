@@ -9,8 +9,14 @@ softdepend: [Vault]
 commands:
   enkephalin:
     description: 查看或管理脑啡肽
-    usage: /enkephalin [give|take|info|reload]
+    usage: /enkephalin [box|give|take|info|reload]
     aliases: [enk]
+    permission: cogito.use
+    permission-message: 你没有权限使用该命令
+  cogito:
+    description: 打开脑啡肽箱子（箱子样式的 GUI 菜单）
+    usage: /cogito [gui|help|reload]
+    aliases: [cog, box]
     permission: cogito.use
     permission-message: 你没有权限使用该命令
   exchange:

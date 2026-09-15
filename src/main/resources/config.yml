@@ -23,6 +23,17 @@ economy:
   # 单次最多兑换多少个
   max-per-exchange: 64
 
+# ===== 箱子 GUI（/cogito gui）=====
+gui:
+  # 关掉之后 /cogito gui 会提示已关闭，命令行的 /exchange 不受影响
+  enabled: true
+  # 箱子标题，MiniMessage 格式
+  title: "<gradient:#22d3a8:#3b82f6>脑啡肽箱子</gradient>"
+  # 行数（每行 9 格）；界面按 5 行布局，写小于 5 会自动按 5 行处理
+  rows: 5
+  # 兑换按钮的档位，最多放 3 个；超过 max-per-exchange 的会被截断到上限
+  exchange-amounts: [1, 8, 64]
+
 # ===== 其它 =====
 debug: false
 
