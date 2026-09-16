@@ -53,3 +53,32 @@ powershell -ExecutionPolicy Bypass -File tools\ship.ps1 -Version 0.3.0-BETA -Mes
 
 > ⚠️ 仓库里的 `.ps1` 必须存成 **UTF-8 with BOM**：Windows PowerShell 5.1 会按系统 GBK 读无 BOM 的脚本，
 > 中文注释会让它直接语法报错。改完脚本记得检查前三字节是不是 `EF BB BF`。
+
+## ship.sh
+
+`ship.ps1` 的 Linux / macOS / WSL / Git Bash 版本，流程和参数完全对应：
+
+```bash
+# 常规一轮：提交源码 + 推聊天记录
+bash tools/ship.sh --version 0.3.0-BETA --message "异想体镇压产出"
+
+# 完整发布（附 jar + sha256）
+bash tools/ship.sh --version 0.3.0-BETA --message "异想体镇压产出" \
+  --since 2026-09-16T02:00:00Z --notes docs/release-notes/v0.3.0-BETA.md --release
+
+# 演练
+bash tools/ship.sh --version 0.3.0-BETA --message "试跑" --dry-run
+```
+
+Arch Linux 上需要的基本工具：`sudo pacman -S --needed git jdk21-openjdk maven nodejs github-cli`。
+
+**WSL 用户注意**：WSL 里的 `$HOME` 是 Linux 家目录，脚本默认找不到 Windows 那边的 Codex 会话文件，
+要用 `--session /mnt/c/Users/<用户名>/.codex/sessions/年/月/日/rollout-*.jsonl` 显式指定；
+另外 WSL 里通常需要自己装 `nodejs` 与 `github-cli`（`sudo pacman -S --needed nodejs github-cli`）。
+
+| 功能 | ship.ps1 | ship.sh |
+| --- | --- | --- |
+| 指定版本 / 提交信息 | `-Version` / `-Message` | `--version` / `--message` |
+| 指定会话文件 / 起始时间 | `-Session` / `-Since` | `--session` / `--since` |
+| Release 说明 / 记录文件名 | `-NotesFile` / `-TranscriptName` | `--notes` / `--transcript-name` |
+| 发 Release / 跳过步骤 / 演练 | `-Release` / `-SkipTranscript` `-SkipBuild` / `-DryRun` | `--release` / `--skip-transcript` `--skip-build` / `--dry-run` |

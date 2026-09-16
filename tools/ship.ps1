@@ -30,6 +30,7 @@ param(
     [string]$Session,        # 会话 jsonl，默认取最近修改的那个
     [string]$Since,          # 只导出该时间点之后（UTC，如 2026-09-16T02:00:00Z）
     [string]$NotesFile,      # Release 说明 md
+    [string]$TranscriptName, # 记录文件名，默认 transcript-<日期>-<版本>.md
     [switch]$Release,
     [switch]$SkipTranscript,
     [switch]$SkipBuild,
@@ -43,7 +44,7 @@ Set-Location $repo
 function Step($text) { Write-Host "==> $text" -ForegroundColor Cyan }
 function Info($text) { Write-Host "    $text" -ForegroundColor Gray }
 
-$transcriptName = "transcript-$(Get-Date -Format 'yyyy-MM-dd')-$Version.md"
+$transcriptName = if ($TranscriptName) { $TranscriptName } else { "transcript-$(Get-Date -Format 'yyyy-MM-dd')-$Version.md" }
 $transcriptPath = Join-Path $repo "chat\$transcriptName"
 $jarPath = Join-Path $repo "target\Cogito-$Version.jar"
 
@@ -133,18 +134,18 @@ if (-not $Release) {
     Step "⑤ 跳过 Release（未加 -Release）"
 } else {
     Step "⑤ 发 GitHub Release"
-    $gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
-    if (-not $gh) {
-        $fallback = Join-Path $env:USERPROFILE 'Documents\Codex\2026-09-15\g\tools\gh\bin\gh.exe'
-        if (Test-Path $fallback) { $gh = $fallback }
-    }
-    if (-not $gh) { throw "找不到 gh，请安装 GitHub CLI 或改成本地路径" }
-
     $assets = @($jarPath)
     $shaFile = Join-Path $repo "dist\Cogito-$Version.jar.sha256"
     if ($DryRun) {
         Info "[dry-run] $gh release create v$Version <jar> <sha256> --title 'Cogito $Version' --notes-file $NotesFile --prerelease"
     } else {
+        $gh = (Get-Command gh -ErrorAction SilentlyContinue).Source
+        if (-not $gh) {
+            $fallback = Join-Path $env:USERPROFILE 'Documents\Codex\2026-09-15\g\tools\gh\bin\gh.exe'
+            if (Test-Path $fallback) { $gh = $fallback }
+        }
+        if (-not $gh) { throw "找不到 gh，请安装 GitHub CLI 或改成本地路径" }
+
         if (-not (Test-Path $shaFile)) {
             $sha = (Get-FileHash $jarPath -Algorithm SHA256).Hash.ToLower()
             "$sha *Cogito-$Version.jar" | Set-Content -Encoding ASCII $shaFile
