@@ -49,6 +49,7 @@
 | 场景 | 做法 |
 | --- | --- |
 | 本机（Windows） | `dev\build.ps1` 打包（`-DeployTo <路径>` 可直接拷到服务器 plugins） |
+| 本机（Arch WSL） | 仓库在 `~/cogito-plugins`，JDK21 + Maven + Node + gh 已就绪，构建 `mvn clean package`，发布 `bash tools/ship.sh`（见 `docs/dev-setup.md`） |
 | 其他机器（Linux/macOS） | `mvn clean package` 或 `bash build.sh` |
 | 交付 | 把 jar 放进服务器 `plugins/`，重启或 `/reload confirm` |
 | 服务器前置 | **Vault + 一个经济插件**（EssentialsX / CMI 等） |
