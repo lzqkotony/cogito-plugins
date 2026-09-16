@@ -1,22 +1,6 @@
-# ===== 脑啡肽物品定义 =====
-# 文本全部使用 MiniMessage 格式，支持 <gradient:#00ffaa:#3b82f6>...</gradient> 这类写法
-enkephalin:
-  material: EMERALD_BLOCK
-  display-name: "<gradient:#22d3a8:#3b82f6>脑啡肽</gradient>"
-  lore:
-    - "<gray>从异想体中提取出的能量结晶"
-    - "<dark_gray>可用于 E.G.O 开发"
-  # 附魔只是为了让物品发光（默认隐藏附魔名，只保留光效）
-  enchantment: unbreaking
-  enchantment-level: 1
-  hide-enchants: true
-  glint: true
-  # 以后加材质包时填 CustomModelData，0 表示不设置
-  custom-model-data: 0
-  # 数据标签名（命名空间是插件名，玩家无法伪造）
-  tag: enkephalin
-
 # ===== 经济（Vault）=====
+# 注意：脑啡肽等物品的定义已经搬到同目录的 items.yml 里了
+# 文本全部使用 MiniMessage 格式，支持 <gradient:#00ffaa:#3b82f6>...</gradient> 这类写法
 economy:
   # 每 1 个脑啡肽需要多少钱（单向兑换，不可逆）
   price-per-enkephalin: 100

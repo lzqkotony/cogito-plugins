@@ -15,7 +15,7 @@ commands:
     permission-message: 你没有权限使用该命令
   cogito:
     description: 打开脑啡肽箱子（箱子样式的 GUI 菜单）
-    usage: /cogito [gui|help|reload]
+    usage: /cogito [gui|give|items|help|reload]
     aliases: [cog, box]
     permission: cogito.use
     permission-message: 你没有权限使用该命令

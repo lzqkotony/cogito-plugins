@@ -10,6 +10,9 @@
 | `transcript-2026-09-15-machine1-v0.1.md` | 第一台机器：搭 Java 环境 → 定玩法 → 写脑啡肽经济与 Vault 兑换 → 开源 → 发布 0.1.0 Beta → 打交接包 |
 | `transcript-2026-09-15-machine2-env-gui.md` | 第二台机器：读交接包 → 搭离线开发环境 → 加箱子 GUI（`/cogito gui`）→ 推 GitHub |
 | `attachments/design-sketch-handwritten.jpg` | 最初的手写玩法设计稿原图（脑啡肽产出区间、E.G.O 三档失败率等） |
+| `attachments/design-sketch-2026-09-16-1.jpg` | 第二批手写稿之一：整体设计思路、OP/非 OP 命令清单 |
+| `attachments/design-sketch-2026-09-16-2.jpg` | 第二批手写稿之二：注册物品表（脑啡肽/模块/Cogito/图纸/金枝）与"打 NBT 标签、不可放置合成"要求 |
+| `attachments/design-sketch-2026-09-16-3.jpg` | 第二批手写稿之三：异想体五阶、E.G.O 护甲/武器/饰品、抗性值与伤害公式 |
 
 ## 新机器上怎么用
 

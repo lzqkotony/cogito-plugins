@@ -7,118 +7,46 @@ import com.seewo.cogito.CogitoPlugin;
 import com.seewo.cogito.text.Messages;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Registry;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
 /**
- * 脑啡肽物品工厂。
+ * 脑啡肽的操作入口（造物 / 识别 / 统计 / 扣除 / 发放）。
  *
- * <p>物品 = 配置里的基础材质（默认附魔绿宝石块）+ 自定义名称/Lore + <b>PersistentDataContainer 标签</b>。
- * 标签是唯一的身份凭据：改名、重新附魔都不影响识别，玩家也无法伪造。
+ * <p>物品定义现在统一放在 items.yml 的 {@code pe} 项里，本类只是它在命令与 GUI 层的外壳，
+ * 这样既保留原有调用方式，又不用把材质、描述、堆叠这些写死在代码里。
  */
 public final class EnkephalinItem {
 
-    private final NamespacedKey tagKey;
-    private final Material material;
-    private final String displayName;
-    private final List<String> lore;
-    private final Enchantment enchantment;
-    private final int enchantmentLevel;
-    private final boolean hideEnchants;
-    private final boolean glint;
-    private final int customModelData;
+    /** items.yml 里脑啡肽的 id。 */
+    public static final String ITEM_ID = "pe";
+
+    private final CogitoPlugin plugin;
 
     public EnkephalinItem(CogitoPlugin plugin) {
-        var config = plugin.getConfig();
-
-        this.tagKey = new NamespacedKey(plugin, config.getString("enkephalin.tag", "enkephalin"));
-
-        Material parsed = Material.matchMaterial(config.getString("enkephalin.material", "EMERALD_BLOCK"));
-        if (parsed == null) {
-            plugin.getLogger().warning("config.yml 里的 enkephalin.material 无效，回退到 EMERALD_BLOCK");
-            parsed = Material.EMERALD_BLOCK;
-        }
-        this.material = parsed;
-
-        this.displayName = config.getString("enkephalin.display-name", "<aqua>脑啡肽");
-        this.lore = config.getStringList("enkephalin.lore");
-        this.enchantment = resolveEnchantment(plugin, config.getString("enkephalin.enchantment", ""));
-        this.enchantmentLevel = Math.max(1, config.getInt("enkephalin.enchantment-level", 1));
-        this.hideEnchants = config.getBoolean("enkephalin.hide-enchants", true);
-        this.glint = config.getBoolean("enkephalin.glint", true);
-        this.customModelData = config.getInt("enkephalin.custom-model-data", 0);
+        this.plugin = plugin;
     }
 
-    private static Enchantment resolveEnchantment(CogitoPlugin plugin, String name) {
-        if (name == null || name.isBlank()) {
-            return null;
+    private CustomItem definition() {
+        CustomItem item = plugin.items().find(ITEM_ID);
+        if (item == null) {
+            throw new IllegalStateException("items.yml 里缺少 " + ITEM_ID + " 物品定义");
         }
-        NamespacedKey key = NamespacedKey.minecraft(name.toLowerCase(Locale.ROOT).trim().replace(' ', '_'));
-        Enchantment enchantment = Registry.ENCHANTMENT.get(key);
-        if (enchantment == null) {
-            plugin.getLogger().warning("未知附魔 " + name + "，脑啡肽将不带附魔光效");
-        }
-        return enchantment;
+        return item;
     }
 
-    /** 造一个脑啡肽物品（数量会被裁剪到单堆上限）。 */
     public ItemStack create(int amount) {
-        int size = Math.max(1, Math.min(material.getMaxStackSize(), amount));
-        ItemStack stack = new ItemStack(material, size);
-
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return stack;
-        }
-        meta.displayName(Messages.of(displayName));
-        if (!lore.isEmpty()) {
-            List<Component> lines = new ArrayList<>(lore.size());
-            for (String line : lore) {
-                lines.add(Messages.of(line));
-            }
-            meta.lore(lines);
-        }
-        if (enchantment != null) {
-            meta.addEnchant(enchantment, enchantmentLevel, true);
-        }
-        if (hideEnchants && enchantment != null) {
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        }
-        if (glint) {
-            meta.setEnchantmentGlintOverride(Boolean.TRUE);
-        }
-        if (customModelData > 0) {
-            meta.setCustomModelData(customModelData);
-        }
-        meta.getPersistentDataContainer().set(tagKey, PersistentDataType.BYTE, (byte) 1);
-
-        stack.setItemMeta(meta);
-        return stack;
+        return definition().create(amount);
     }
 
-    /** 判断一个物品是不是脑啡肽。 */
     public boolean isEnkephalin(ItemStack stack) {
-        if (stack == null || stack.getType() != material) {
-            return false;
-        }
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) {
-            return false;
-        }
-        Byte tag = meta.getPersistentDataContainer().get(tagKey, PersistentDataType.BYTE);
-        return tag != null && tag == (byte) 1;
+        return definition().matches(stack);
     }
 
     /** 统计玩家身上（含护甲/副手槽）的脑啡肽总数。 */
@@ -165,9 +93,9 @@ public final class EnkephalinItem {
         if (amount <= 0) {
             return;
         }
+        int perStack = definition().maxStackSize();
         List<ItemStack> stacks = new ArrayList<>();
         int remaining = amount;
-        int perStack = Math.max(1, material.getMaxStackSize());
         while (remaining > 0) {
             int size = Math.min(perStack, remaining);
             stacks.add(create(size));
@@ -184,19 +112,20 @@ public final class EnkephalinItem {
         }
     }
 
+    /** 统一标签：cogito:item。 */
     public NamespacedKey tagKey() {
-        return tagKey;
+        return new NamespacedKey(plugin, "item");
     }
 
     public Material material() {
-        return material;
+        return definition().material();
     }
 
     public Enchantment enchantment() {
-        return enchantment;
+        return definition().enchantment();
     }
 
     public int customModelData() {
-        return customModelData;
+        return definition().customModelData();
     }
 }

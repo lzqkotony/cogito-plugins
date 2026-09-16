@@ -10,6 +10,8 @@ import com.seewo.cogito.economy.VaultHook;
 import com.seewo.cogito.gui.EnkephalinMenu;
 import com.seewo.cogito.gui.MenuListener;
 import com.seewo.cogito.item.EnkephalinItem;
+import com.seewo.cogito.item.ItemRegistry;
+import com.seewo.cogito.listener.ItemBehaviourListener;
 import com.seewo.cogito.listener.PlayerJoinListener;
 import com.seewo.cogito.text.Messages;
 import org.bukkit.command.PluginCommand;
@@ -20,14 +22,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * Cogito —— 脑叶服务器核心玩法插件。
  *
- * <p>当前版本只做「脑啡肽」这一层：实体物品、Vault 经济兑换、管理命令。
- * 异想体镇压与 E.G.O 开发会在后续版本接上来（见设计稿）。
+ * <p>当前版本做「物品与经济」这一层：物品注册表（items.yml）、脑啡肽、Vault 经济兑换、
+ * 箱子 GUI、管理命令。异想体镇压与 E.G.O 开发会在后续版本接上来（见设计稿）。
  */
 public final class CogitoPlugin extends JavaPlugin {
 
     private static CogitoPlugin instance;
 
     private EnkephalinItem enkephalinItem;
+    private ItemRegistry itemRegistry;
     private VaultHook vaultHook;
 
     public static CogitoPlugin get() {
@@ -39,6 +42,8 @@ public final class CogitoPlugin extends JavaPlugin {
         instance = this;
         saveDefaultConfig();
 
+        this.itemRegistry = new ItemRegistry(this);
+        this.itemRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook = new VaultHook(this);
         boolean vaultReady = vaultHook.setup();
@@ -48,9 +53,10 @@ public final class CogitoPlugin extends JavaPlugin {
         registerCommand("cogito", new CogitoCommand(this));
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
+        getServer().getPluginManager().registerEvents(new ItemBehaviourListener(this), this);
 
         getLogger().info("已启用：脑啡肽物品 = " + enkephalinItem.material()
-                + "（标签 " + enkephalinItem.tagKey().getKey() + "）");
+                + "（标签 " + enkephalinItem.tagKey() + "）");
         if (vaultReady) {
             getLogger().info("Vault 经济已连接：" + vaultHook.economy().getName());
         } else {
@@ -64,9 +70,10 @@ public final class CogitoPlugin extends JavaPlugin {
         getLogger().info("已禁用");
     }
 
-    /** 重载 config.yml：物品定义会跟着刷新（/enkephalin reload）。 */
+    /** 重载 config.yml 与 items.yml（/enkephalin reload、/cogito reload）。 */
     public void reloadPluginConfig() {
         reloadConfig();
+        this.itemRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook.setup();
     }
@@ -96,6 +103,10 @@ public final class CogitoPlugin extends JavaPlugin {
 
     public EnkephalinItem enkephalinItem() {
         return enkephalinItem;
+    }
+
+    public ItemRegistry items() {
+        return itemRegistry;
     }
 
     public VaultHook vault() {

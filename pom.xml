@@ -6,7 +6,7 @@
 
     <groupId>com.seewo</groupId>
     <artifactId>cogito</artifactId>
-    <version>0.1.0-BETA</version>
+    <version>0.2.0-BETA</version>
     <packaging>jar</packaging>
     <name>Cogito</name>
     <description>脑叶服务器核心玩法插件（脑啡肽经济 / E.G.O 开发）</description>

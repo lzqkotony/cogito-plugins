@@ -27,7 +27,9 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 
 ## 功能
 
-- **脑啡肽实体物品**：带 `PersistentDataContainer` NBT 标签的附魔绿宝石块（材质、名称、Lore、附魔、光效、CustomModelData 全部走配置）
+- **物品注册表（items.yml）**：脑啡肽、脑啡肽模块、Cogito、E.G.O 研发图纸、金枝，全部配置化定义（材质、名称、Lore、附魔、光效、堆叠上限、能否放置/合成）
+- **脑啡肽实体物品**：带 `PersistentDataContainer` NBT 标签（`cogito:item=pe`）的自定义物品；玩家改名、附魔、堆叠都不会失效，也无法伪造
+- **原版行为拦截**：注册物品不可放置、不可参与合成（可在 items.yml 关掉），避免被拿去套利
 - **Vault 经济兑换**：`/exchange` 用服务器货币按 100:1 单向兑换脑啡肽（价格可配）
 - **箱子 GUI**：`/cogito gui` 打开箱子样式的菜单，看持有量 / 余额，点按钮直接兑换（物品锁死，拿不走）
 - **准确的背包统计**：识别只看 NBT 标签，玩家改名、附魔、堆叠都不会失效，也无法伪造
@@ -54,11 +56,12 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 5. 看到这两行日志就说明装好了：
 
 ```
-[Cogito] 已启用：脑啡肽物品 = EMERALD_BLOCK（标签 enkephalin）
+[Cogito] 已注册 5 个物品：pe, pe-module, cogito, ego-blueprint, golden-bough
+[Cogito] 已启用：脑啡肽物品 = EMERALD（标签 cogito:item）
 [Cogito] Vault 经济已连接：EssentialsX Economy
 ```
 
-首次启动会生成 `plugins/Cogito/config.yml`，改完用 `/enkephalin reload` 热重载，不用重启。
+首次启动会生成 `plugins/Cogito/config.yml`（经济、箱子界面、其它）和 `plugins/Cogito/items.yml`（物品定义），改完用 `/cogito reload` 热重载，不用重启。
 
 ## 命令与权限
 
@@ -73,22 +76,15 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 | `/enkephalin info` | 查看当前物品与经济配置 | `cogito.admin` | OP |
 | `/enkephalin reload` | 重载 `config.yml` | `cogito.admin` | OP |
 | `/cogito reload` | 同上，管理员重载配置 | `cogito.admin` | OP |
+| `/cogito items` | 列出所有已注册物品 | `cogito.admin` | OP |
+| `/cogito give <物品id> <玩家> <数量>` | 发放注册物品（`pe` / `pe-module` / `cogito` …） | `cogito.admin` | OP |
+| `/cogito debug <物品id>` | 造一个物品并打印材质、NBT、识别自检结果 | `cogito.admin` | OP |
 
 ## 配置
 
-```yaml
-enkephalin:
-  material: EMERALD_BLOCK          # 基础材质
-  display-name: "<gradient:#22d3a8:#3b82f6>脑啡肽</gradient>"   # MiniMessage 格式
-  lore:
-    - "<gray>从异想体中提取出的能量结晶"
-  enchantment: unbreaking          # 让物品发光的附魔
-  enchantment-level: 1
-  hide-enchants: true              # 隐藏附魔名，只留光效
-  glint: true                      # 强制光效
-  custom-model-data: 0             # 以后接材质包时填
-  tag: enkephalin                  # NBT 标签：cogito:enkephalin
+`config.yml`（经济与界面）：
 
+```yaml
 economy:
   price-per-enkephalin: 100        # 每个脑啡肽需要多少「钱」
   max-per-exchange: 64             # 单次兑换上限
@@ -98,7 +94,22 @@ gui:
   title: "<gradient:#22d3a8:#3b82f6>脑啡肽箱子</gradient>"
   rows: 5                          # 界面固定按 5 行布局，写小会自动按 5 行处理
   exchange-amounts: [1, 8, 64]     # 三个兑换按钮的档位，超过 max-per-exchange 会被截断
+
+debug: false
+join-message: ""                   # 玩家进服提示，留空则不发送
 ```
+
+`items.yml`（物品注册表，节选）：
+
+| id | 名称 | 原型材质 | 说明 |
+| --- | --- | --- | --- |
+| `pe` | 脑啡肽 | 绿宝石 | 基础货币，别名 `PE` / `enkephalin` |
+| `pe-module` | 脑啡肽模块 | 绿宝石块 | 提取异想体所必备，别名 `PE-BOX` |
+| `cogito` | Cogito | 跳跃药水 | 堆叠上限已改成 64 |
+| `ego-blueprint` | E.G.O 研发图纸 | 纸 | 后续 E.G.O 开发消耗 |
+| `golden-bough` | 金枝 | 树枝 | 脑叶公司奇点的核心浓缩 |
+
+每个物品都能配：`material`、`display-name`、`lore`、`potion-type`、`enchantment`、`glint`、`custom-model-data`、`stack-size`、`stackable`、`placeable`、`craftable`、`aliases`、`legacy-tags`。
 
 ### 箱子 GUI 布局（5 行 45 格）
 
@@ -115,14 +126,14 @@ gui:
 菜单里的物品都是「幽灵物品」：点击会被取消，拿不走、拖不动，也没法用 shift 搬进背包
 （不做这一步的话，shift 点击会把真物品塞进菜单，关掉界面就丢了）。
 
-> 物品身份由 NBT 标签 `cogito:enkephalin` 决定，**改名称/Lore 不会让已有脑啡肽失效**（`material` 保持不变即可）。
+> 物品身份由 NBT 标签 `cogito:item` 决定。老版本用过的标签写进 `legacy-tags`（脑啡肽已写 `enkephalin`），服务器里的老物品照样能被识别，不会因为改版变废纸。
 
 ## 从源码构建
 
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.1.0-BETA.jar
+mvn clean package                       # 产物：target/Cogito-0.2.0-BETA.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -132,10 +143,15 @@ bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plug
 ```
 src/main/java/com/seewo/cogito/
 ├── CogitoPlugin.java               # 主类：生命周期、命令注册、配置重载
-├── item/EnkephalinItem.java        # 脑啡肽物品工厂：造物 / 识别 / 统计 / 扣除 / 发放
+├── item/ItemRegistry.java          # 物品注册表：读取 items.yml
+├── item/CustomItem.java            # 单个物品定义：造物 / 识别 / 堆叠上限
+├── item/EnkephalinItem.java        # 脑啡肽在命令与 GUI 层的入口
 ├── economy/VaultHook.java          # Vault 经济对接
 ├── command/EnkephalinCommand.java  # /enkephalin
 ├── command/ExchangeCommand.java    # /exchange
+├── command/CogitoCommand.java      # /cogito（gui / give / items / debug / reload）
+├── gui/Menu.java  gui/MenuListener.java  gui/EnkephalinMenu.java   # 箱子界面
+├── listener/ItemBehaviourListener.java  # 拦掉放置与合成
 ├── listener/PlayerJoinListener.java
 └── text/Messages.java              # MiniMessage 文本出口
 ```
@@ -147,9 +163,10 @@ src/main/java/com/seewo/cogito/
 | 版本 | 内容 | 状态 |
 | --- | --- | --- |
 | v0.1 | 脑啡肽实体物品 + Vault 兑换 + 管理命令 | ✅ 已发布 0.1 Beta |
-| v0.2 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 🚧 计划中 |
-| v0.3 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%）失败率） | 📋 计划中 |
-| v0.4 | 随机 E.G.O 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
+| v0.2 | 箱子 GUI + 物品注册表（脑啡肽/模块/Cogito/图纸/金枝） | ✅ 已完成（未发 Release） |
+| v0.3 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 🚧 计划中 |
+| v0.4 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%）失败率）与 E.G.O 装备（抗性公式、无限耐久） | 📋 计划中 |
+| v0.5 | 玩家数据层（等级 `/cogito set Lv`、重置）、随机 E.G.O 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
 
 ## 常见问题
 

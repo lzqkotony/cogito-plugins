@@ -1,0 +1,91 @@
+# ===== Cogito 物品注册表 =====
+# 所有 Cogito 物品都在这里定义，统一打 NBT 标签 cogito:item = <id>（玩家无法伪造）。
+# 设计稿要求：物品不保留原型的原版功能（不可放置、不可合成），脑啡肽类物品可堆叠。
+#
+# 字段说明：
+#   material           Bukkit 材质名
+#   display-name       MiniMessage 文本
+#   lore               描述行（MiniMessage）
+#   potion-type        药水类型（material 为 POTION 时用，如 leaping）
+#   stack-size         最大堆叠数（0 = 用默认；药水这类原版不能堆叠的写 64 就能堆叠）
+#   stackable          是否允许堆叠（false = 强制单堆）
+#   placeable          能否像方块一样放下去
+#   craftable          能否参与原版合成（false = 参与合成时结果被清空）
+#   aliases            命令里可以直接用的别名
+#   legacy-tags        旧版本用过的标签名，保持向后兼容（老物品不会失效）
+
+items:
+  pe:
+    material: EMERALD
+    display-name: "<gradient:#22d3a8:#3b82f6>脑啡肽</gradient>"
+    lore:
+      - "<gray>这个世界上最清洁而高能的能源"
+      - "<gray>却因为脑叶公司的垄断变得极为珍贵"
+    enchantment: unbreaking
+    enchantment-level: 1
+    hide-enchants: true
+    glint: true
+    custom-model-data: 0
+    stackable: true
+    placeable: false
+    craftable: false
+    aliases: [PE, enkephalin, 脑啡肽]
+    legacy-tags: [enkephalin]
+
+  pe-module:
+    material: EMERALD_BLOCK
+    display-name: "<gradient:#22d3a8:#3b82f6>脑啡肽模块</gradient>"
+    lore:
+      - "<gray>能源模块，浓缩后的大量能源"
+      - "<gray>是提取异想体所必备的"
+    enchantment: unbreaking
+    enchantment-level: 1
+    hide-enchants: true
+    glint: true
+    custom-model-data: 0
+    stackable: true
+    placeable: false
+    craftable: false
+    aliases: [PE-BOX, pebox, module, 模块]
+
+  cogito:
+    material: POTION
+    potion-type: leaping
+    display-name: "<gradient:#a855f7:#22d3a8>Cogito</gradient>"
+    lore:
+      - "<gray>脑叶公司的奇点技术"
+      - "<gray>从人类潜意识中提取"
+      - "<dark_gray>「以萌发万物的种子」"
+    glint: true
+    custom-model-data: 0
+    stack-size: 64
+    stackable: true
+    placeable: false
+    craftable: false
+    aliases: [Cog]
+
+  ego-blueprint:
+    material: PAPER
+    display-name: "<gradient:#f59e0b:#ef4444>E.G.O 研发图纸</gradient>"
+    lore:
+      - "<gray>由异想体为原型创造的装备"
+      - "<gray>究竟会是怎样的力量呢？"
+    glint: true
+    custom-model-data: 0
+    stackable: true
+    placeable: false
+    craftable: false
+    aliases: [blueprint, 图纸]
+
+  golden-bough:
+    material: STICK
+    display-name: "<gradient:#fbbf24:#f59e0b>金枝</gradient>"
+    lore:
+      - "<gray>脑叶公司的遗产之一"
+      - "<gray>是脑叶公司奇点的核心浓缩"
+    glint: true
+    custom-model-data: 0
+    stackable: true
+    placeable: false
+    craftable: false
+    aliases: [bough, 金枝]
