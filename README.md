@@ -49,6 +49,8 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 
 ## 安装
 
+（Rocky Linux / 纯 IPv6 服务器的一步步操作见 [docs/deploy-linux.md](docs/deploy-linux.md)）
+
 1. 从 [Releases](https://github.com/lzqkotony/cogito-plugins/releases) 下载最新的 `Cogito-x.y.z.jar`（也可以按下方说明自行构建）
 2. 放进服务端的 `plugins/` 目录
 3. 确保服务端已安装 **Vault + 经济插件**
