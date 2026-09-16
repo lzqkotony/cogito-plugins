@@ -31,6 +31,7 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 - **脑啡肽实体物品**：带 `PersistentDataContainer` NBT 标签（`cogito:item=pe`）的自定义物品；玩家改名、附魔、堆叠都不会失效，也无法伪造
 - **原版行为拦截**：注册物品不可放置、不可参与合成（可在 items.yml 关掉），避免被拿去套利
 - **Vault 经济兑换**：`/exchange` 用服务器货币按 100:1 单向兑换脑啡肽（价格可配）
+- **玩家数据层（core data）**：SQLite 存档（等级、各异想体镇压次数、已解锁 E.G.O），上线读档 / 退服存档 / 定时异步落库
 - **箱子 GUI**：`/cogito gui` 打开箱子样式的菜单，看持有量 / 余额，点按钮直接兑换（物品锁死，拿不走）
 - **准确的背包统计**：识别只看 NBT 标签，玩家改名、附魔、堆叠都不会失效，也无法伪造
 - **完整的管理命令**：发放 / 扣除 / 查看配置 / 热重载，带 Tab 补全与权限节点
@@ -81,6 +82,10 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 | `/cogito items` | 列出所有已注册物品 | `cogito.admin` | OP |
 | `/cogito give <物品id> <玩家> <数量>` | 发放注册物品（`pe` / `pe-module` / `cogito` …） | `cogito.admin` | OP |
 | `/cogito debug <物品id>` | 造一个物品并打印材质、NBT、识别自检结果 | `cogito.admin` | OP |
+| `/cogito set Lv <玩家> <数字>` | 设置玩家等级 | `cogito.admin` | OP |
+| `/cogito reset player_information <玩家>` | 重置该玩家数据 | `cogito.admin` | OP |
+| `/cogito data <玩家>` | 查看玩家数据（在线/离线均可） | `cogito.admin` | OP |
+| `/cogito debug db` | 数据库读写自检（写入 → 读回 → 删除） | `cogito.admin` | OP |
 
 ## 配置
 
@@ -135,7 +140,7 @@ join-message: ""                   # 玩家进服提示，留空则不发送
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.2.0-BETA.jar
+mvn clean package                       # 产物：target/Cogito-0.3.0-BETA.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -166,9 +171,10 @@ src/main/java/com/seewo/cogito/
 | --- | --- | --- |
 | v0.1 | 脑啡肽实体物品 + Vault 兑换 + 管理命令 | ✅ 已发布 0.1 Beta |
 | v0.2 | 箱子 GUI + 物品注册表（脑啡肽/模块/Cogito/图纸/金枝） | ✅ 已完成（未发 Release） |
-| v0.3 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 🚧 计划中 |
-| v0.4 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%）失败率）与 E.G.O 装备（抗性公式、无限耐久） | 📋 计划中 |
-| v0.5 | 玩家数据层（等级 `/cogito set Lv`、重置）、随机 E.G.O 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
+| v0.3 | 玩家数据层 core data（SQLite：等级 / 镇压次数 / E.G.O 解锁） | ✅ 已发布 0.3.0-Beta |
+| v0.4 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 🚧 计划中 |
+| v0.5 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%））与 E.G.O 装备（抗性公式、无限耐久） | 📋 计划中 |
+| v0.6 | 随机 E.G.O 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
 
 ## 常见问题
 

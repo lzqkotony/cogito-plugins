@@ -42,6 +42,19 @@
 - 第二批设计稿整理进 `docs/design.md`（含命令清单与实现状态、物品表、E.G.O 抗性公式），三张手写稿原图入库
 - 推送 GitHub（`60f6948`）
 
+## 2026-09-16 · 第一台机器（玩家数据层 core data）
+
+- 实现 **SQLite 玩家数据层**（`data/` 包）：`PlayerProfile`（等级 / 镇压次数 / E.G.O 解锁）、
+  `SqlitePlayerDataStore`（三张表、WAL、事务 upsert）、`PlayerDataService`（内存缓存 + 每 30 秒异步落库 + 关服写回）
+  - 驱动直接用服务端自带的 `org.xerial:sqlite-jdbc`，不额外引入依赖、不 shade
+- 新命令：`/cogito set Lv <玩家> <数字>`、`/cogito reset player_information <玩家>`、
+  `/cogito data <玩家>`、`/cogito debug db`（数据库读写自检）
+- 版本 → **0.3.0-BETA**
+- 用 **Docker** 起了个 Paper 1.21.11 实例（WSL Arch + itzg/minecraft-server 镜像）实际验证：
+  插件加载、启用、物品注册、数据库初始化、Vault 连接全部正常，无异常
+  （中途踩坑：Docker Hub 被墙 → 配国内镜像源；镜像自身要从 raw.githubusercontent.com 拉默认配置会卡住，与插件无关）
+- 918（九一八纪念）插件的草稿写完但**未采用**，用户交给另一位开发者，草稿移到 `work/other-projects/mingji-918-draft/`
+
 ---
 
 ## 开发与交付方式

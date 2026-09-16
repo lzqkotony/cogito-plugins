@@ -4,12 +4,16 @@
 package com.seewo.cogito.command;
 
 import com.seewo.cogito.CogitoPlugin;
+import com.seewo.cogito.data.PlayerDataStore;
+import com.seewo.cogito.data.PlayerProfile;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -26,7 +30,7 @@ public final class CogitoCommand implements TabExecutor {
 
     private static final String PERMISSION_ADMIN = "cogito.admin";
     private static final List<String> SUB_COMMANDS =
-            List.of("gui", "give", "items", "debug", "help", "reload");
+            List.of("gui", "give", "items", "set", "reset", "data", "debug", "help", "reload");
 
     private final CogitoPlugin plugin;
 
@@ -51,6 +55,15 @@ public final class CogitoCommand implements TabExecutor {
             }
             case "debug" -> {
                 return debugItem(sender, args);
+            }
+            case "set" -> {
+                return setValue(sender, label, args);
+            }
+            case "reset" -> {
+                return resetData(sender, label, args);
+            }
+            case "data" -> {
+                return showData(sender, label, args);
             }
             case "help" -> {
                 sendHelp(sender, label);
@@ -83,10 +96,155 @@ public final class CogitoCommand implements TabExecutor {
         if (sender.hasPermission(PERMISSION_ADMIN)) {
             Messages.raw(sender, "<yellow>/" + label + " items <gray>- 列出所有已注册物品");
             Messages.raw(sender, "<yellow>/" + label + " give <物品id> <玩家> <数量> <gray>- 发放物品");
+            Messages.raw(sender, "<yellow>/" + label + " set Lv <玩家> <数字> <gray>- 设置玩家等级");
+            Messages.raw(sender, "<yellow>/" + label + " reset player_information <玩家> <gray>- 重置玩家数据");
+            Messages.raw(sender, "<yellow>/" + label + " data <玩家> <gray>- 查看玩家数据");
             Messages.raw(sender, "<yellow>/" + label + " debug <物品id> <gray>- 造一个物品并打印它的数据");
+            Messages.raw(sender, "<yellow>/" + label + " debug db <gray>- 数据库读写自检");
             Messages.raw(sender, "<yellow>/" + label + " reload <gray>- 重载 config.yml");
             Messages.raw(sender, "<yellow>/enkephalin give|take <玩家> <数量> <gray>- 发放 / 扣除");
         }
+    }
+
+    // ------------------------------------------------------------ 玩家数据
+
+    /** /cogito set Lv <玩家> <数字> —— 目前只支持等级这一项。 */
+    private boolean setValue(CommandSender sender, String label, String[] args) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        if (args.length < 4) {
+            Messages.send(sender, "<red>用法：<white>/" + label + " set Lv <玩家> <数字>");
+            return true;
+        }
+        String key = args[1].toLowerCase(Locale.ROOT);
+        if (!key.equals("lv") && !key.equals("level")) {
+            Messages.send(sender, "<yellow>目前只支持 <white>Lv</white>（等级），其它键等对应功能做出来再加");
+            return true;
+        }
+        Optional<PlayerProfile> found = plugin.data().lookup(args[2]);
+        if (found.isEmpty()) {
+            Messages.send(sender, "<red>没有 <white>" + args[2] + "</white> 的数据（该玩家至少进服过一次才能改）");
+            return true;
+        }
+        int value;
+        try {
+            value = Integer.parseInt(args[3]);
+        } catch (NumberFormatException error) {
+            Messages.send(sender, "<red>等级必须是整数");
+            return true;
+        }
+        if (value < 1) {
+            Messages.send(sender, "<red>等级不能小于 1");
+            return true;
+        }
+
+        PlayerProfile profile = found.get();
+        int before = profile.level();
+        profile.level(value);
+        plugin.data().saveAsync(profile);
+        Messages.send(sender, "<green>已把 <white>" + profile.name() + "</white> 的等级从 "
+                + before + " 设为 <white>" + profile.level());
+
+        Player online = Bukkit.getPlayer(profile.uuid());
+        if (online != null && online != sender) {
+            Messages.send(online, "<gray>你的等级被设置为 <white>" + profile.level());
+        }
+        return true;
+    }
+
+    /** /cogito reset player_information <玩家> —— 清空该玩家数据（等级、镇压次数、E.G.O 解锁）。 */
+    private boolean resetData(CommandSender sender, String label, String[] args) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        if (args.length < 3) {
+            Messages.send(sender, "<red>用法：<white>/" + label + " reset player_information <玩家>");
+            return true;
+        }
+        String what = args[1].toLowerCase(Locale.ROOT);
+        if (what.equals("setting")) {
+            Messages.send(sender, "<yellow>reset setting 还没实现（想恢复默认配置请手动删掉 plugins/Cogito 下的 config.yml）");
+            return true;
+        }
+        if (!what.equals("player_information") && !what.equals("player")) {
+            Messages.send(sender, "<red>只支持 <white>reset player_information <玩家>");
+            return true;
+        }
+
+        Optional<PlayerProfile> found = plugin.data().lookup(args[2]);
+        if (found.isEmpty()) {
+            Messages.send(sender, "<red>没有 <white>" + args[2] + "</white> 的数据");
+            return true;
+        }
+        PlayerProfile profile = found.get();
+        plugin.data().reset(profile);
+        Messages.send(sender, "<green>已重置 <white>" + profile.name() + "</white> 的数据（等级 "
+                + profile.level() + "，镇压记录与 E.G.O 解锁已清空）");
+        return true;
+    }
+
+    /** /cogito data <玩家> —— 查看数据，排查用。 */
+    private boolean showData(CommandSender sender, String label, String[] args) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        if (args.length < 2) {
+            Messages.send(sender, "<red>用法：<white>/" + label + " data <玩家>");
+            return true;
+        }
+        Optional<PlayerProfile> found = plugin.data().lookup(args[1]);
+        if (found.isEmpty()) {
+            Messages.send(sender, "<red>没有 <white>" + args[1] + "</white> 的数据");
+            return true;
+        }
+        PlayerProfile profile = found.get();
+        Messages.raw(sender, "<gray>—— 玩家数据：" + profile.name() + " ——");
+        Messages.raw(sender, "<gray>UUID：<white>" + profile.uuid());
+        Messages.raw(sender, "<gray>等级：<white>" + profile.level());
+        Messages.raw(sender, "<gray>镇压记录：<white>"
+                + (profile.allSuppressions().isEmpty() ? "无" : profile.allSuppressions().toString()));
+        Messages.raw(sender, "<gray>已解锁 E.G.O：<white>"
+                + (profile.unlockedEgo().isEmpty() ? "无" : String.join(", ", profile.unlockedEgo())));
+        Messages.raw(sender, "<gray>首次上线：<white>" + java.time.Instant.ofEpochMilli(profile.firstSeen())
+                + " <gray>最近上线：<white>" + java.time.Instant.ofEpochMilli(profile.lastSeen()));
+        Messages.raw(sender, "<gray>数据库里共有 <white>" + plugin.data().storedCount() + " <gray>名玩家的数据");
+        return true;
+    }
+
+    /** /cogito debug db —— 数据库自检：写一条临时数据、读回来、再删掉。 */
+    private boolean debugDatabase(CommandSender sender) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        UUID probe = UUID.randomUUID();
+        PlayerDataStore store = plugin.data().store();
+        PlayerProfile profile = PlayerProfile.create(probe, "self-test");
+        profile.level(7);
+        profile.addSuppression("self-test-abnormality", 3);
+        profile.unlockEgo("self-test-ego");
+        try {
+            store.save(profile);
+            Optional<PlayerProfile> loaded = store.load(probe);
+            boolean pass = loaded.isPresent()
+                    && loaded.get().level() == 7
+                    && loaded.get().suppressions("self-test-abnormality") == 3
+                    && loaded.get().isEgoUnlocked("self-test-ego");
+            store.delete(probe);
+            Messages.raw(sender, "<gray>—— 数据库自检 ——");
+            Messages.raw(sender, "<gray>写入/读取/删除：<white>" + (pass ? "通过" : "失败"));
+            loaded.ifPresent(value -> Messages.raw(sender, "<gray>读回的等级：<white>" + value.level()
+                    + "<gray>，镇压记录：<white>" + value.allSuppressions()
+                    + "<gray>，E.G.O：<white>" + value.unlockedEgo()));
+            Messages.raw(sender, "<gray>库中玩家数：<white>" + store.count());
+        } catch (RuntimeException error) {
+            Messages.raw(sender, "<red>自检失败：" + error.getMessage());
+        }
+        return true;
     }
 
     /**
@@ -100,8 +258,11 @@ public final class CogitoCommand implements TabExecutor {
             return true;
         }
         if (args.length < 2) {
-            Messages.send(sender, "<red>用法：<white>/cogito debug <物品id>");
+            Messages.send(sender, "<red>用法：<white>/cogito debug <物品id|db>");
             return true;
+        }
+        if (args[1].equalsIgnoreCase("db") || args[1].equalsIgnoreCase("data")) {
+            return debugDatabase(sender);
         }
         CustomItem item = plugin.items().find(args[1]);
         if (item == null) {
@@ -246,6 +407,26 @@ public final class CogitoCommand implements TabExecutor {
         String sub = args[0].toLowerCase(Locale.ROOT);
         String prefix = args[args.length - 1].toLowerCase(Locale.ROOT);
         List<String> result = new ArrayList<>();
+
+        if (sub.equals("set")) {
+            if (args.length == 2) {
+                return List.of("Lv");
+            }
+            if (args.length == 3) {
+                return onlinePlayers(prefix);
+            }
+            if (args.length == 4) {
+                return List.of("1", "10", "50");
+            }
+            return result;
+        }
+        if (sub.equals("reset")) {
+            return args.length == 2 ? List.of("player_information") : result;
+        }
+        if (sub.equals("data")) {
+            return args.length == 2 ? onlinePlayers(prefix) : result;
+        }
+
         boolean giveLike = sub.equals("give") || sub.equals("debug");
         if (!giveLike) {
             return result;
@@ -257,14 +438,20 @@ public final class CogitoCommand implements TabExecutor {
                 }
             }
         } else if (args.length == 3 && sub.equals("give")) {
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                if (online.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) {
-                    result.add(online.getName());
-                }
-            }
+            return onlinePlayers(prefix);
         } else if (args.length == 4 && sub.equals("give")) {
             result.addAll(List.of("1", "8", "64"));
         }
         return result;
+    }
+
+    private List<String> onlinePlayers(String prefix) {
+        List<String> names = new ArrayList<>();
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            if (online.getName().toLowerCase(Locale.ROOT).startsWith(prefix)) {
+                names.add(online.getName());
+            }
+        }
+        return names;
     }
 }

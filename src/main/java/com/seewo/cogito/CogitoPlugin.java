@@ -6,12 +6,14 @@ package com.seewo.cogito;
 import com.seewo.cogito.command.CogitoCommand;
 import com.seewo.cogito.command.EnkephalinCommand;
 import com.seewo.cogito.command.ExchangeCommand;
+import com.seewo.cogito.data.PlayerDataService;
 import com.seewo.cogito.economy.VaultHook;
 import com.seewo.cogito.gui.EnkephalinMenu;
 import com.seewo.cogito.gui.MenuListener;
 import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.item.ItemRegistry;
 import com.seewo.cogito.listener.ItemBehaviourListener;
+import com.seewo.cogito.listener.PlayerDataListener;
 import com.seewo.cogito.listener.PlayerJoinListener;
 import com.seewo.cogito.text.Messages;
 import org.bukkit.command.PluginCommand;
@@ -31,6 +33,7 @@ public final class CogitoPlugin extends JavaPlugin {
 
     private EnkephalinItem enkephalinItem;
     private ItemRegistry itemRegistry;
+    private PlayerDataService dataService;
     private VaultHook vaultHook;
 
     public static CogitoPlugin get() {
@@ -45,6 +48,14 @@ public final class CogitoPlugin extends JavaPlugin {
         this.itemRegistry = new ItemRegistry(this);
         this.itemRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
+
+        this.dataService = new PlayerDataService(this);
+        if (!dataService.init()) {
+            getLogger().severe("玩家数据层初始化失败，插件将被禁用");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         this.vaultHook = new VaultHook(this);
         boolean vaultReady = vaultHook.setup();
 
@@ -54,6 +65,7 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new ItemBehaviourListener(this), this);
+        getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
 
         getLogger().info("已启用：脑啡肽物品 = " + enkephalinItem.material()
                 + "（标签 " + enkephalinItem.tagKey() + "）");
@@ -66,6 +78,9 @@ public final class CogitoPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (dataService != null) {
+            dataService.shutdown();
+        }
         instance = null;
         getLogger().info("已禁用");
     }
@@ -107,6 +122,10 @@ public final class CogitoPlugin extends JavaPlugin {
 
     public ItemRegistry items() {
         return itemRegistry;
+    }
+
+    public PlayerDataService data() {
+        return dataService;
     }
 
     public VaultHook vault() {
