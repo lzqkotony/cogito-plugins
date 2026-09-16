@@ -1,0 +1,113 @@
+# ===== E.G.O. 配置 =====
+# x = armor-resistance，统一作用于所有传入伤害，不区分 Minecraft 伤害类型。
+# y = 玩家穿着的同一套 E.G.O. 防具件数（0~4），武器与饰品不计入 y。
+#
+# 最终伤害倍率：1 - (1 - x) * y / 4
+#   满四件：r = x
+#   缺一件：r = 1 - (1 - x) * 3 / 4
+#
+# 目前攻击侧只有 RED（红伤）和 BLUE（蓝伤）。
+# BLUE 只能由手持 attack-channel: BLUE 的 E.G.O. 武器发起；RED 作为普通攻击通道。
+#
+# E.G.O. 防具不可附魔，不提供原版护甲值/盔甲韧性。
+# 混入原版防具或其他 E.G.O. 防具时，整套抗性失效，按 r=1 处理。
+
+enabled: true
+
+sets:
+  paradise-lost:
+    display-name: "<gradient:#facc15:#a855f7>失乐园</gradient>"
+    # 示例值：失乐园统一 x=0.1。x 不设代码范围，直接按配置计算。
+    armor-resistance: 0.1
+
+    armor:
+      helmet:
+        material: NETHERITE_HELMET
+        display-name: "<gradient:#facc15:#a855f7>失乐园头饰</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
+          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+        glint: true
+        custom-model-data: 92001
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+      chestplate:
+        material: NETHERITE_CHESTPLATE
+        display-name: "<gradient:#facc15:#a855f7>失乐园胸甲</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
+          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+        glint: true
+        custom-model-data: 92002
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+      leggings:
+        material: NETHERITE_LEGGINGS
+        display-name: "<gradient:#facc15:#a855f7>失乐园护腿</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
+          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+        glint: true
+        custom-model-data: 92003
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+      boots:
+        material: NETHERITE_BOOTS
+        display-name: "<gradient:#facc15:#a855f7>失乐园战靴</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
+          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+        glint: true
+        custom-model-data: 92004
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+
+    weapons:
+      blue-sword:
+        material: NETHERITE_SWORD
+        display-name: "<gradient:#38bdf8:#a855f7>失乐园·蓝伤长剑</gradient>"
+        lore:
+          - "<gray>攻击通道：<blue>蓝伤"
+          - "<dark_gray>蓝伤只能由 E.G.O. 来源造成"
+        glint: true
+        custom-model-data: 92005
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        attack-channel: BLUE
+      red-sword:
+        material: NETHERITE_SWORD
+        display-name: "<gradient:#ef4444:#a855f7>失乐园·红伤长剑</gradient>"
+        lore:
+          - "<gray>攻击通道：<red>红伤"
+          - "<dark_gray>红伤可以由 E.G.O. 或普通攻击来源造成"
+        glint: true
+        custom-model-data: 92006
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        attack-channel: RED
+
+    accessories:
+      charm:
+        material: ECHO_SHARD
+        display-name: "<gradient:#a855f7:#38bdf8>失乐园饰品</gradient>"
+        lore:
+          - "<gray>E.G.O. 饰品不参与防具抗性件数计算"
+          - "<dark_gray>武器与饰品都不影响 y"
+        glint: true
+        custom-model-data: 92007
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true

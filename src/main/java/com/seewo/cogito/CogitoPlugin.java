@@ -8,10 +8,14 @@ import com.seewo.cogito.command.EnkephalinCommand;
 import com.seewo.cogito.command.ExchangeCommand;
 import com.seewo.cogito.data.PlayerDataService;
 import com.seewo.cogito.economy.VaultHook;
+import com.seewo.cogito.ego.EgoDamageService;
+import com.seewo.cogito.ego.EgoRegistry;
 import com.seewo.cogito.gui.EnkephalinMenu;
 import com.seewo.cogito.gui.MenuListener;
 import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.item.ItemRegistry;
+import com.seewo.cogito.listener.EgoDamageListener;
+import com.seewo.cogito.listener.EgoEnchantListener;
 import com.seewo.cogito.listener.ItemBehaviourListener;
 import com.seewo.cogito.listener.PlayerDataListener;
 import com.seewo.cogito.listener.PlayerJoinListener;
@@ -33,6 +37,8 @@ public final class CogitoPlugin extends JavaPlugin {
 
     private EnkephalinItem enkephalinItem;
     private ItemRegistry itemRegistry;
+    private EgoRegistry egoRegistry;
+    private EgoDamageService egoDamageService;
     private PlayerDataService dataService;
     private VaultHook vaultHook;
 
@@ -47,6 +53,9 @@ public final class CogitoPlugin extends JavaPlugin {
 
         this.itemRegistry = new ItemRegistry(this);
         this.itemRegistry.load();
+        this.egoRegistry = new EgoRegistry(this);
+        this.egoRegistry.load();
+        this.egoDamageService = new EgoDamageService(this);
         this.enkephalinItem = new EnkephalinItem(this);
 
         this.dataService = new PlayerDataService(this);
@@ -65,6 +74,8 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new ItemBehaviourListener(this), this);
+        getServer().getPluginManager().registerEvents(new EgoDamageListener(this), this);
+        getServer().getPluginManager().registerEvents(new EgoEnchantListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
 
         getLogger().info("已启用：脑啡肽物品 = " + enkephalinItem.material()
@@ -89,6 +100,7 @@ public final class CogitoPlugin extends JavaPlugin {
     public void reloadPluginConfig() {
         reloadConfig();
         this.itemRegistry.load();
+        this.egoRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook.setup();
     }
@@ -126,6 +138,14 @@ public final class CogitoPlugin extends JavaPlugin {
 
     public PlayerDataService data() {
         return dataService;
+    }
+
+    public EgoRegistry ego() {
+        return egoRegistry;
+    }
+
+    public EgoDamageService egoDamage() {
+        return egoDamageService;
     }
 
     public VaultHook vault() {

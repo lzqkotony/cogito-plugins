@@ -6,6 +6,8 @@ package com.seewo.cogito.command;
 import com.seewo.cogito.CogitoPlugin;
 import com.seewo.cogito.data.PlayerDataStore;
 import com.seewo.cogito.data.PlayerProfile;
+import com.seewo.cogito.ego.DamageChannel;
+import com.seewo.cogito.ego.EgoEquipped;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
 import java.util.ArrayList;
@@ -96,10 +98,13 @@ public final class CogitoCommand implements TabExecutor {
         if (sender.hasPermission(PERMISSION_ADMIN)) {
             Messages.raw(sender, "<yellow>/" + label + " items <gray>- 列出所有已注册物品");
             Messages.raw(sender, "<yellow>/" + label + " give <物品id> <玩家> <数量> <gray>- 发放物品");
+            Messages.raw(sender, "<yellow>/" + label + " give ego <玩家> <套装id> <数量> <gray>- 发放整套 E.G.O.");
             Messages.raw(sender, "<yellow>/" + label + " set Lv <玩家> <数字> <gray>- 设置玩家等级");
             Messages.raw(sender, "<yellow>/" + label + " reset player_information <玩家> <gray>- 重置玩家数据");
             Messages.raw(sender, "<yellow>/" + label + " data <玩家> <gray>- 查看玩家数据");
             Messages.raw(sender, "<yellow>/" + label + " debug <物品id> <gray>- 造一个物品并打印它的数据");
+            Messages.raw(sender, "<yellow>/" + label + " debug ego <玩家> <gray>- 查看 E.G.O. 抗性结算");
+            Messages.raw(sender, "<yellow>/" + label + " debug attack <red|blue> <攻击者> <目标> <伤害> <gray>- 伤害通道自检");
             Messages.raw(sender, "<yellow>/" + label + " debug db <gray>- 数据库读写自检");
             Messages.raw(sender, "<yellow>/" + label + " reload <gray>- 重载 config.yml");
             Messages.raw(sender, "<yellow>/enkephalin give|take <玩家> <数量> <gray>- 发放 / 扣除");
@@ -264,6 +269,12 @@ public final class CogitoCommand implements TabExecutor {
         if (args[1].equalsIgnoreCase("db") || args[1].equalsIgnoreCase("data")) {
             return debugDatabase(sender);
         }
+        if (args[1].equalsIgnoreCase("ego")) {
+            return debugEgo(sender, args);
+        }
+        if (args[1].equalsIgnoreCase("attack")) {
+            return debugAttack(sender, args);
+        }
         CustomItem item = plugin.items().find(args[1]);
         if (item == null) {
             Messages.send(sender, "<red>没有这个物品：<white>" + args[1] + "</white>，可用：" + itemIds());
@@ -290,6 +301,77 @@ public final class CogitoCommand implements TabExecutor {
         return true;
     }
 
+    /** /cogito debug ego <玩家> —— 查看玩家当前套装、件数和最终倍率。 */
+    private boolean debugEgo(CommandSender sender, String[] args) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        if (args.length < 3) {
+            Messages.send(sender, "<red>用法：<white>/cogito debug ego <玩家>");
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            Messages.send(sender, "<red>找不到在线玩家 <white>" + args[2]);
+            return true;
+        }
+
+        EgoEquipped equipped = plugin.ego().resolve(target);
+        Messages.raw(sender, "<gray>—— E.G.O. 抗性自检：<white>" + target.getName() + " <gray>——");
+        Messages.raw(sender, "<gray>套装：<white>"
+                + (equipped.setId() == null ? "未穿戴" : equipped.setId())
+                + "<gray>，防具件数 y=<white>" + equipped.pieces());
+        Messages.raw(sender, "<gray>状态：<white>"
+                + (equipped.mixed() ? "混搭，抗性失效" : equipped.active() ? "生效" : "未生效"));
+        Messages.raw(sender, "<gray>标称抗性 x=<white>" + equipped.resistance()
+                + "<gray>，最终倍率 r=<white>" + equipped.factor());
+        return true;
+    }
+
+    /** /cogito debug attack <red|blue> <攻击者> <目标> <伤害> —— 验证蓝伤来源限制。 */
+    private boolean debugAttack(CommandSender sender, String[] args) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        if (args.length < 6) {
+            Messages.send(sender, "<red>用法：<white>/cogito debug attack <red|blue> <攻击者> <目标> <伤害>");
+            return true;
+        }
+        DamageChannel channel = DamageChannel.parse(args[2]);
+        if (channel == null) {
+            Messages.send(sender, "<red>伤害通道只能是 <white>red</white> 或 <white>blue");
+            return true;
+        }
+        Player attacker = Bukkit.getPlayerExact(args[3]);
+        Player target = Bukkit.getPlayerExact(args[4]);
+        if (attacker == null || target == null) {
+            Messages.send(sender, "<red>攻击者与目标都必须在线上");
+            return true;
+        }
+        double damage;
+        try {
+            damage = Double.parseDouble(args[5]);
+        } catch (NumberFormatException error) {
+            Messages.send(sender, "<red>伤害必须是数字");
+            return true;
+        }
+        if (!Double.isFinite(damage) || damage <= 0.0D) {
+            Messages.send(sender, "<red>伤害必须大于 0");
+            return true;
+        }
+
+        boolean accepted = plugin.egoDamage().dealDamage(attacker, target, damage, channel);
+        if (!accepted) {
+            Messages.send(sender, "<red>攻击被拒绝：蓝伤只能由手持 BLUE E.G.O. 武器的玩家发起");
+            return true;
+        }
+        Messages.send(sender, "<green>已通过 <white>" + channel.displayName()
+                + "</white> 对 <white>" + target.getName() + "</white> 结算伤害 <white>" + damage);
+        return true;
+    }
+
     /** /cogito give <物品id> <玩家> <数量> —— 给玩家注册物品（仅 OP）。 */
     private boolean giveItem(CommandSender sender, String label, String[] args) {
         if (!sender.hasPermission(PERMISSION_ADMIN)) {
@@ -303,9 +385,11 @@ public final class CogitoCommand implements TabExecutor {
         }
 
         String rawId = args[1].toLowerCase(Locale.ROOT);
-        // 设计稿里的 give ego / aberrations / tool 属于后续版本
-        if (rawId.equals("ego") || rawId.equals("aberrations") || rawId.equals("tool")) {
-            Messages.send(sender, "<yellow>" + rawId + " 的发放还没实现（E.G.O 与异想体在后续版本）");
+        if (rawId.equals("ego")) {
+            return giveEgo(sender, label, args);
+        }
+        if (rawId.equals("aberrations") || rawId.equals("tool")) {
+            Messages.send(sender, "<yellow>" + rawId + " 的发放还没实现（等异想体系统）");
             return true;
         }
 
@@ -335,6 +419,47 @@ public final class CogitoCommand implements TabExecutor {
         Messages.send(sender, "<green>已给 <white>" + target.getName() + "</white> "
                 + amount + " 个 " + item.displayName());
         Messages.send(target, "<green>你收到了 " + amount + " 个 " + item.displayName());
+        return true;
+    }
+
+    /** /cogito give ego <玩家> <套装id> <数量> —— 发放整套 E.G.O. 物品。 */
+    private boolean giveEgo(CommandSender sender, String label, String[] args) {
+        if (args.length < 5) {
+            Messages.send(sender, "<red>用法：<white>/" + label + " give ego <玩家> <套装id> <数量>");
+            Messages.send(sender, "<gray>可用套装：<white>" + String.join(", ", plugin.ego().sets().stream()
+                    .map(value -> value.id()).toList()));
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            Messages.send(sender, "<red>找不到在线玩家 <white>" + args[2]);
+            return true;
+        }
+        String setId = args[3].toLowerCase(Locale.ROOT);
+        if (plugin.ego().set(setId) == null) {
+            Messages.send(sender, "<red>没有这套 E.G.O.：<white>" + setId);
+            return true;
+        }
+        int amount;
+        try {
+            amount = Integer.parseInt(args[4]);
+        } catch (NumberFormatException error) {
+            Messages.send(sender, "<red>数量必须是整数");
+            return true;
+        }
+        if (amount <= 0) {
+            Messages.send(sender, "<red>数量必须大于 0");
+            return true;
+        }
+
+        int count = 0;
+        for (CustomItem item : plugin.ego().itemsForSet(setId)) {
+            give(target, item, amount);
+            count++;
+        }
+        Messages.send(sender, "<green>已给 <white>" + target.getName() + "</white> 发放整套 E.G.O. <white>"
+                + setId + "</white> × " + amount + "（" + count + " 件）");
+        Messages.send(target, "<green>你收到了整套 E.G.O. <white>" + setId + "</white> × " + amount);
         return true;
     }
 
@@ -432,15 +557,30 @@ public final class CogitoCommand implements TabExecutor {
             return result;
         }
         if (args.length == 2) {
+            if (sub.equals("debug")) {
+                result.addAll(List.of("db", "ego", "attack"));
+            }
             for (CustomItem item : plugin.items().all()) {
                 if (item.id().startsWith(prefix)) {
                     result.add(item.id());
                 }
             }
-        } else if (args.length == 3 && sub.equals("give")) {
+        } else if (args.length == 3 && sub.equals("give") && !args[1].equalsIgnoreCase("ego")) {
             return onlinePlayers(prefix);
+        } else if (sub.equals("give") && args.length == 3 && args[1].equalsIgnoreCase("ego")) {
+            return onlinePlayers(prefix);
+        } else if (sub.equals("give") && args.length == 4 && args[1].equalsIgnoreCase("ego")) {
+            return plugin.ego().sets().stream().map(value -> value.id()).filter(id -> id.startsWith(prefix)).toList();
+        } else if (sub.equals("give") && args.length == 5 && args[1].equalsIgnoreCase("ego")) {
+            result.addAll(List.of("1", "2", "4"));
         } else if (args.length == 4 && sub.equals("give")) {
             result.addAll(List.of("1", "8", "64"));
+        } else if (sub.equals("debug") && args.length == 3 && args[1].equalsIgnoreCase("ego")) {
+            return onlinePlayers(prefix);
+        } else if (sub.equals("debug") && args.length == 3 && args[1].equalsIgnoreCase("attack")) {
+            result.addAll(List.of("red", "blue"));
+        } else if (sub.equals("debug") && args.length >= 4 && args[1].equalsIgnoreCase("attack")) {
+            return onlinePlayers(prefix);
         }
         return result;
     }

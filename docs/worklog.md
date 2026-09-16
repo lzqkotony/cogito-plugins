@@ -55,6 +55,31 @@
   （中途踩坑：Docker Hub 被墙 → 配国内镜像源；镜像自身要从 raw.githubusercontent.com 拉默认配置会卡住，与插件无关）
 - 918（九一八纪念）插件的草稿写完但**未采用**，用户交给另一位开发者，草稿移到 `work/other-projects/mingji-918-draft/`
 
+## 2026-09-17 · 新机器（Linux）· E.G.O. 伤害与抗性
+
+- 从 GitHub 重新 clone，读取此前全部工作记录，确认接手点
+- 明确 E.G.O. 伤害规则（用户拍板）：
+  - 攻击侧只有 **红伤 / 蓝伤** 两条通道
+  - **蓝伤只能由 E.G.O. 来源造成**
+  - 防具侧每套 E.G.O. 只有一个统一抗性 `x`，对**所有传入伤害**生效，不按伤害类型区分
+  - `x` 不设代码范围，直接使用 `ego.yml` 中标注的值
+  - `y = 同一套有效 E.G.O. 防具件数`，不设置部位权重；武器与饰品不计入
+  - 公式 `r = 1 - (1 - x) * y / 4`，最终伤害保持 `double` 交给 Minecraft
+  - 混入原版防具或其他 E.G.O. 防具时，全部 E.G.O. 抗性失效，`r=1`
+  - E.G.O. 防具不能附魔，不提供原版护甲值与盔甲韧性
+- 实现 `ego/` 包：伤害通道、装备部位、套装注册、纯公式、伤害服务与监听器
+- 新增 `ego.yml`，内置可测试的 `失乐园` 套装：`x=0.1`、四件防具、红/蓝测试武器、饰品
+- 新增管理员自检：
+  - `/cogito give ego <玩家> <套装id> <数量>` 发放整套 E.G.O.
+  - `/cogito debug ego <玩家>` 查看当前套装、件数 `y`、抗性 `x` 与倍率 `r`
+  - `/cogito debug attack <red|blue> <攻击者> <目标> <伤害>` 验证蓝伤来源限制
+- 同步修复：**Cogito 不能被饮用**，右键不再触发跳跃药水效果
+- 版本 → **0.4.0-BETA**，增加 Maven 单元测试与 GitHub Actions 自动构建 / Release
+- 本地 `mvn clean test package`：BUILD SUCCESS，5/5 测试通过；JAR SHA-256 `e9b7e9c3a75365937a45d76068179e17d0472ee9ee8cc9d842a4e2607900084f`
+- 正式服部署：停止实例 → 备份并停用 `Cogito-0.3.0-BETA.jar` → 写入 `Cogito-0.4.0-BETA.jar` → 启动实例
+- 正式服加载验证：识别 `Cogito v0.4.0-BETA`、注册 5 个基础物品和 1 套 E.G.O.（7 件）、SQLite 与 Vault 正常
+- 控制台自检：`/cogito items` 返回 12 个注册物品；`/cogito debug cogito` 识别到 `cogito:item=cogito`、堆叠上限 64、不可放置/合成
+
 ---
 
 ## 开发与交付方式

@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
+import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
 
 /**
@@ -37,6 +38,16 @@ public final class ItemBehaviourListener implements Listener {
         event.setCancelled(true);
         Player player = event.getPlayer();
         Messages.send(player, "<red>" + displayName(item) + " <red>不能放置");
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onConsume(PlayerItemConsumeEvent event) {
+        CustomItem item = plugin.items().identify(event.getItem());
+        if (item == null || !item.id().equalsIgnoreCase("cogito")) {
+            return;
+        }
+        event.setCancelled(true);
+        Messages.send(event.getPlayer(), "<red>Cogito 不能被饮用");
     }
 
     @EventHandler(priority = EventPriority.HIGH)

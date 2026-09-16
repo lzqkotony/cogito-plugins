@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B -ntp clean verify
+
+      - name: Generate checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          jar="$(find target -maxdepth 1 -name 'Cogito-*.jar' ! -name 'original-*' | head -n 1)"
+          test -n "$jar"
+          sha256sum "$jar" | sed "s|$jar|$(basename "$jar")|" > "$jar.sha256"
+          cat "$jar.sha256"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/Cogito-*.jar
+            target/Cogito-*.jar.sha256
+          name: Cogito ${{ github.ref_name }}
+          body_path: docs/release-notes/${{ github.ref_name }}.md
+          prerelease: true
+          generate_release_notes: true

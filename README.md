@@ -29,7 +29,10 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 
 - **物品注册表（items.yml）**：脑啡肽、脑啡肽模块、Cogito、E.G.O 研发图纸、金枝，全部配置化定义（材质、名称、Lore、附魔、光效、堆叠上限、能否放置/合成）
 - **脑啡肽实体物品**：带 `PersistentDataContainer` NBT 标签（`cogito:item=pe`）的自定义物品；玩家改名、附魔、堆叠都不会失效，也无法伪造
-- **原版行为拦截**：注册物品不可放置、不可参与合成（可在 items.yml 关掉），避免被拿去套利
+- **E.G.O. 攻击通道**：只提供红伤 / 蓝伤两条通道；蓝伤只能由手持 `attack-channel: BLUE` 的 E.G.O. 武器发起
+- **E.G.O. 统一防具抗性**：整套防具共享一个 `x`，对全部 Minecraft 传入伤害统一生效；按穿着件数 `y` 插值，混搭时抗性失效
+- **E.G.O. 装备限制**：不提供原版护甲值与盔甲韧性、无限耐久、不可附魔，武器和饰品不计入抗性件数
+- **原版行为拦截**：注册物品不可放置、不可参与合成（可在 items.yml 关掉）；Cogito 也不能被当作药水饮用
 - **Vault 经济兑换**：`/exchange` 用服务器货币按 100:1 单向兑换脑啡肽（价格可配）
 - **玩家数据层（core data）**：SQLite 存档（等级、各异想体镇压次数、已解锁 E.G.O），上线读档 / 退服存档 / 定时异步落库
 - **箱子 GUI**：`/cogito gui` 打开箱子样式的菜单，看持有量 / 余额，点按钮直接兑换（物品锁死，拿不走）
@@ -56,15 +59,16 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 2. 放进服务端的 `plugins/` 目录
 3. 确保服务端已安装 **Vault + 经济插件**
 4. 重启服务端（或执行 `/reload confirm`）
-5. 看到这两行日志就说明装好了：
+5. 看到下面这些日志就说明装好了：
 
 ```
 [Cogito] 已注册 5 个物品：pe, pe-module, cogito, ego-blueprint, golden-bough
+[Cogito] 已注册 1 套 E.G.O.，共 7 件物品
 [Cogito] 已启用：脑啡肽物品 = EMERALD（标签 cogito:item）
 [Cogito] Vault 经济已连接：EssentialsX Economy
 ```
 
-首次启动会生成 `plugins/Cogito/config.yml`（经济、箱子界面、其它）和 `plugins/Cogito/items.yml`（物品定义），改完用 `/cogito reload` 热重载，不用重启。
+首次启动会生成 `plugins/Cogito/config.yml`（经济、箱子界面、其它）、`plugins/Cogito/items.yml`（基础物品）和 `plugins/Cogito/ego.yml`（E.G.O. 套装），改完用 `/cogito reload` 热重载，不用重启。
 
 ## 命令与权限
 
@@ -81,7 +85,10 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 | `/cogito reload` | 同上，管理员重载配置 | `cogito.admin` | OP |
 | `/cogito items` | 列出所有已注册物品 | `cogito.admin` | OP |
 | `/cogito give <物品id> <玩家> <数量>` | 发放注册物品（`pe` / `pe-module` / `cogito` …） | `cogito.admin` | OP |
+| `/cogito give ego <玩家> <套装id> <数量>` | 发放一整套 E.G.O.（防具、武器与饰品） | `cogito.admin` | OP |
 | `/cogito debug <物品id>` | 造一个物品并打印材质、NBT、识别自检结果 | `cogito.admin` | OP |
+| `/cogito debug ego <玩家>` | 查看套装、防具件数 `y`、抗性 `x` 与最终倍率 `r` | `cogito.admin` | OP |
+| `/cogito debug attack <red\|blue> <攻击者> <目标> <伤害>` | 自检伤害通道与蓝伤来源限制 | `cogito.admin` | OP |
 | `/cogito set Lv <玩家> <数字>` | 设置玩家等级 | `cogito.admin` | OP |
 | `/cogito reset player_information <玩家>` | 重置该玩家数据 | `cogito.admin` | OP |
 | `/cogito data <玩家>` | 查看玩家数据（在线/离线均可） | `cogito.admin` | OP |
@@ -118,6 +125,37 @@ join-message: ""                   # 玩家进服提示，留空则不发送
 
 每个物品都能配：`material`、`display-name`、`lore`、`potion-type`、`enchantment`、`glint`、`custom-model-data`、`stack-size`、`stackable`、`placeable`、`craftable`、`aliases`、`legacy-tags`。
 
+`ego.yml`（E.G.O. 套装，节选）：
+
+```yaml
+sets:
+  paradise-lost:
+    display-name: "<gradient:#facc15:#a855f7>失乐园</gradient>"
+    armor-resistance: 0.1       # 统一 x，不限制代码范围
+    armor:
+      helmet:     { material: NETHERITE_HELMET,     enchantable: false, unbreakable: true, remove-vanilla-attributes: true }
+      chestplate: { material: NETHERITE_CHESTPLATE, enchantable: false, unbreakable: true, remove-vanilla-attributes: true }
+      leggings:   { material: NETHERITE_LEGGINGS,   enchantable: false, unbreakable: true, remove-vanilla-attributes: true }
+      boots:      { material: NETHERITE_BOOTS,      enchantable: false, unbreakable: true, remove-vanilla-attributes: true }
+    weapons:
+      blue-sword:
+        material: NETHERITE_SWORD
+        attack-channel: BLUE   # 蓝伤只能由 E.G.O. 来源造成
+      red-sword:
+        material: NETHERITE_SWORD
+        attack-channel: RED
+```
+
+抗性公式：
+
+```text
+y = 同一套有效 E.G.O. 防具件数（0~4，武器与饰品不计）
+r = 1 - (1 - x) * y / 4
+最终伤害 = 当前伤害 * r
+```
+
+混入原版防具或另一套 E.G.O. 防具时，整套抗性失效并统一按 `r=1`。计算全程使用 `double`，不主动取整。
+
 ### 箱子 GUI 布局（5 行 45 格）
 
 | 槽位 | 内容 |
@@ -140,7 +178,7 @@ join-message: ""                   # 玩家进服提示，留空则不发送
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.3.0-BETA.jar
+mvn clean package                       # 产物：target/Cogito-0.4.0-BETA.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -153,12 +191,16 @@ src/main/java/com/seewo/cogito/
 ├── item/ItemRegistry.java          # 物品注册表：读取 items.yml
 ├── item/CustomItem.java            # 单个物品定义：造物 / 识别 / 堆叠上限
 ├── item/EnkephalinItem.java        # 脑啡肽在命令与 GUI 层的入口
+├── ego/EgoRegistry.java            # 读取 ego.yml、识别套装并计算件数/倍率
+├── ego/EgoDamageService.java       # 红伤 / 蓝伤统一伤害入口
 ├── economy/VaultHook.java          # Vault 经济对接
 ├── command/EnkephalinCommand.java  # /enkephalin
 ├── command/ExchangeCommand.java    # /exchange
-├── command/CogitoCommand.java      # /cogito（gui / give / items / debug / reload）
+├── command/CogitoCommand.java      # /cogito（gui / give / debug / 数据管理 / reload）
 ├── gui/Menu.java  gui/MenuListener.java  gui/EnkephalinMenu.java   # 箱子界面
-├── listener/ItemBehaviourListener.java  # 拦掉放置与合成
+├── listener/ItemBehaviourListener.java  # 拦截放置、合成与 Cogito 饮用
+├── listener/EgoDamageListener.java      # 应用 E.G.O. 统一抗性
+├── listener/EgoEnchantListener.java     # 阻止 E.G.O. 附魔
 ├── listener/PlayerJoinListener.java
 └── text/Messages.java              # MiniMessage 文本出口
 ```
@@ -172,9 +214,9 @@ src/main/java/com/seewo/cogito/
 | v0.1 | 脑啡肽实体物品 + Vault 兑换 + 管理命令 | ✅ 已发布 0.1 Beta |
 | v0.2 | 箱子 GUI + 物品注册表（脑啡肽/模块/Cogito/图纸/金枝） | ✅ 已完成（未发 Release） |
 | v0.3 | 玩家数据层 core data（SQLite：等级 / 镇压次数 / E.G.O 解锁） | ✅ 已发布 0.3.0-Beta |
-| v0.4 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 🚧 计划中 |
-| v0.5 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%））与 E.G.O 装备（抗性公式、无限耐久） | 📋 计划中 |
-| v0.6 | 随机 E.G.O 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
+| v0.4 | E.G.O. 红/蓝伤害通道、统一防具抗性、无限耐久与不可附魔；修复 Cogito 可饮用 | ✅ 已发布 0.4.0-Beta |
+| v0.5 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 📋 计划中 |
+| v0.6 | E.G.O 定向开发（镇压 5 次解锁；普通 50% / 高级 25%（费用 +20%）/ 决断 0%（费用 +50%））与随机开发 | 📋 计划中 |
 
 ## 常见问题
 

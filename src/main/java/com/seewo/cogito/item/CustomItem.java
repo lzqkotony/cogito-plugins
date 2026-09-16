@@ -3,7 +3,10 @@
 
 package com.seewo.cogito.item;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.seewo.cogito.CogitoPlugin;
+import com.seewo.cogito.ego.DamageChannel;
+import com.seewo.cogito.ego.EgoPiece;
 import com.seewo.cogito.text.Messages;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,15 +25,19 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionType;
 
 /**
- * 一个注册物品的定义（见 items.yml）。
+ * 一个注册物品的定义（见 items.yml 与 ego.yml）。
  *
  * <p>身份靠 NBT 标签：新物品写 {@code cogito:item = <id>}；
+ * E.G.O. 物品另外写 set / piece / damage_channel，且创建时就清除附魔与原版属性修饰符。
  * 为了不让服务器里已有的老物品失效，{@code legacy-tags} 里列出的标签也认（且不校验材质）。
  */
 public final class CustomItem {
 
     private final String id;
     private final NamespacedKey itemKey;
+    private final NamespacedKey egoSetKey;
+    private final NamespacedKey egoPieceKey;
+    private final NamespacedKey damageChannelKey;
     private final List<NamespacedKey> legacyKeys;
     private final Material material;
     private final String displayName;
@@ -45,10 +52,33 @@ public final class CustomItem {
     private final boolean placeable;
     private final boolean craftable;
     private final PotionType potionType;
+    private final String egoSetId;
+    private final EgoPiece egoPiece;
+    private final DamageChannel damageChannel;
+    private final boolean enchantable;
+    private final boolean unbreakable;
+    private final boolean removeVanillaAttributes;
 
     public CustomItem(CogitoPlugin plugin, NamespacedKey itemKey, String id, ConfigurationSection section) {
+        this(plugin, itemKey, id, section, null, null, null);
+    }
+
+    public CustomItem(
+            CogitoPlugin plugin,
+            NamespacedKey itemKey,
+            String id,
+            ConfigurationSection section,
+            String egoSetId,
+            EgoPiece egoPiece,
+            DamageChannel damageChannel) {
         this.id = id;
         this.itemKey = itemKey;
+        this.egoSetKey = new NamespacedKey(plugin, "ego_set");
+        this.egoPieceKey = new NamespacedKey(plugin, "ego_piece");
+        this.damageChannelKey = new NamespacedKey(plugin, "damage_channel");
+        this.egoSetId = egoSetId == null ? null : egoSetId.toLowerCase(Locale.ROOT);
+        this.egoPiece = egoPiece;
+        this.damageChannel = damageChannel;
 
         Material parsed = Material.matchMaterial(String.valueOf(section.getString("material", "STONE")));
         if (parsed == null) {
@@ -59,16 +89,20 @@ public final class CustomItem {
 
         this.displayName = section.getString("display-name", "<white>" + id);
         this.lore = section.getStringList("lore");
-        this.enchantment = resolveEnchantment(plugin, id, section.getString("enchantment", ""));
+        Enchantment parsedEnchantment = resolveEnchantment(plugin, id, section.getString("enchantment", ""));
+        this.enchantment = this.egoSetId == null ? parsedEnchantment : null;
         this.enchantmentLevel = Math.max(1, section.getInt("enchantment-level", 1));
         this.hideEnchants = section.getBoolean("hide-enchants", true);
         this.glint = section.getBoolean("glint", true);
         this.customModelData = section.getInt("custom-model-data", 0);
         this.stackSize = Math.max(0, section.getInt("stack-size", 0));
-        this.stackable = section.getBoolean("stackable", true);
+        this.stackable = this.egoSetId == null && section.getBoolean("stackable", true);
         this.placeable = section.getBoolean("placeable", false);
         this.craftable = section.getBoolean("craftable", false);
         this.potionType = resolvePotionType(plugin, id, section.getString("potion-type", ""));
+        this.enchantable = section.getBoolean("enchantable", this.egoSetId == null);
+        this.unbreakable = section.getBoolean("unbreakable", this.egoSetId != null);
+        this.removeVanillaAttributes = section.getBoolean("remove-vanilla-attributes", this.egoSetId != null);
 
         this.legacyKeys = new ArrayList<>();
         for (String legacy : section.getStringList("legacy-tags")) {
@@ -137,6 +171,28 @@ public final class CustomItem {
         if (customModelData > 0) {
             meta.setCustomModelData(customModelData);
         }
+
+        if (egoSetId != null) {
+            meta.removeEnchantments();
+            meta.setUnbreakable(unbreakable);
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+            if (unbreakable) {
+                meta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
+            }
+            if (removeVanillaAttributes) {
+                // 空 multimap 会覆盖材质自带的护甲值 / 韧性属性。
+                meta.setAttributeModifiers(ImmutableMultimap.of());
+            }
+            meta.getPersistentDataContainer().set(egoSetKey, PersistentDataType.STRING, egoSetId);
+            if (egoPiece != null) {
+                meta.getPersistentDataContainer().set(egoPieceKey, PersistentDataType.STRING, egoPiece.name());
+            }
+            if (damageChannel != null) {
+                meta.getPersistentDataContainer().set(
+                        damageChannelKey, PersistentDataType.STRING, damageChannel.name());
+            }
+        }
+
         // 只有需要改动原版堆叠上限时才写这个组件（药水默认 1，写 64 才能堆叠）
         if (limit != Math.max(1, material.getMaxStackSize())) {
             meta.setMaxStackSize(limit);
@@ -205,5 +261,29 @@ public final class CustomItem {
 
     public boolean craftable() {
         return craftable;
+    }
+
+    public String egoSetId() {
+        return egoSetId;
+    }
+
+    public EgoPiece egoPiece() {
+        return egoPiece;
+    }
+
+    public DamageChannel damageChannel() {
+        return damageChannel;
+    }
+
+    public boolean enchantable() {
+        return enchantable;
+    }
+
+    public boolean unbreakable() {
+        return unbreakable;
+    }
+
+    public boolean removeVanillaAttributes() {
+        return removeVanillaAttributes;
     }
 }

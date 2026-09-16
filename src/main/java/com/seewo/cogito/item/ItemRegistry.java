@@ -61,6 +61,19 @@ public final class ItemRegistry {
         plugin.getLogger().info("已注册 " + items.size() + " 个物品：" + String.join(", ", items.keySet()));
     }
 
+    /** 把别处（例如 ego.yml）生成的物品加入统一注册表。 */
+    public void register(CustomItem item) {
+        if (item == null || item.id() == null || item.id().isBlank()) {
+            return;
+        }
+        items.put(item.id().toLowerCase(Locale.ROOT), item);
+    }
+
+    /** 统一物品 NBT 标签键。 */
+    public NamespacedKey itemKey() {
+        return itemKey;
+    }
+
     /** 按 id 或别名查物品（大小写不敏感）。 */
     public CustomItem find(String idOrAlias) {
         if (idOrAlias == null) {

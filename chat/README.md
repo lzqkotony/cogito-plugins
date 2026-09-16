@@ -1,6 +1,6 @@
 # 聊天记录与设计稿
 
-这个目录放着 Cogito 从零到现在（v0.1.0-BETA + 箱子 GUI）的完整对话记录。
+这个目录放着 Cogito 从零到现在（v0.4.0-BETA）的完整对话记录。
 目的很直接：**换台电脑 `git clone` 下来，把这里的 md 丢给 Codex，就能接着写**，不用再从零解释一遍。
 
 ## 文件
@@ -10,6 +10,7 @@
 | `transcript-2026-09-15-machine1-v0.1.md` | 第一台机器：搭 Java 环境 → 定玩法 → 写脑啡肽经济与 Vault 兑换 → 开源 → 发布 0.1.0 Beta → 打交接包 |
 | `transcript-2026-09-15-machine2-env-gui.md` | 第二台机器：读交接包 → 搭离线开发环境 → 加箱子 GUI（`/cogito gui`）→ 推 GitHub |
 | `transcript-2026-09-16-machine3-items-registry.md` | 第三轮（回到第一台机器）：clone 最新代码 → 按第二批手写稿做物品注册表、自检命令 → 推 GitHub |
+| `transcript-2026-09-17-0.4.0-BETA.md` | 第四轮：确认 E.G.O. 红/蓝伤害与统一抗性规则 → 实现套装/防具/伤害通道 → 阻止 Cogito 饮用 → 部署正式服 → 发布 0.4.0 Beta |
 | `attachments/design-sketch-handwritten.jpg` | 最初的手写玩法设计稿原图（脑啡肽产出区间、E.G.O 三档失败率等） |
 | `../docs/worklog.md` | 开发工作记录：各轮做了什么、用户拍板过什么、待确认什么 |
 | `../docs/design.md` | 完整玩法设计（两批手写稿的整理版） |
