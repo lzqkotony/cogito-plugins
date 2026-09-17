@@ -68,13 +68,46 @@ public final class EgoRegistry {
                 continue;
             }
 
-            sets.put(setId, new EgoSetDefinition(setId, displayName, resistance));
+            int developCost = Math.max(0, setSection.getInt("develop.cost", 64));
+            String blueprintId = "blueprint-" + setId;
+            sets.put(setId, new EgoSetDefinition(setId, displayName, resistance, developCost, blueprintId));
             loadArmor(setId, setSection.getConfigurationSection("armor"));
             loadItems(setId, setSection.getConfigurationSection("weapons"), EgoPiece.WEAPON);
             loadItems(setId, setSection.getConfigurationSection("accessories"), EgoPiece.ACCESSORY);
+            registerBlueprint(setId, displayName, setSection);
         }
 
         plugin.getLogger().info("已注册 " + sets.size() + " 套 E.G.O.，共 " + itemCount + " 件物品");
+    }
+
+    /**
+     * 为每套 E.G.O. 注册一张"研发图纸"。
+     *
+     * <p>图纸只负责**解锁**该套的研发能力（图纸本身会消耗掉），之后在开发台研发同一套不再需要图纸。
+     * 物品 id 约定为 {@code blueprint-<套装id>}，右键使用即可解锁。
+     */
+    private void registerBlueprint(String setId, String setDisplayName, ConfigurationSection setSection) {
+        ConfigurationSection blueprint = setSection.getConfigurationSection("develop.blueprint");
+        org.bukkit.configuration.file.YamlConfiguration definition =
+                new org.bukkit.configuration.file.YamlConfiguration();
+        definition.set("material", blueprint == null ? "PAPER" : blueprint.getString("material", "PAPER"));
+        definition.set("display-name", blueprint == null
+                ? "<gradient:#facc15:#a855f7>E.G.O. 研发图纸</gradient> <gray>· " + setDisplayName
+                : blueprint.getString("display-name"));
+        definition.set("lore", blueprint == null
+                ? java.util.List.of(
+                        "<gray>解锁「" + setDisplayName + "<gray>」的研发能力",
+                        "<dark_gray>专属图纸 · 不是消耗品",
+                        "<dark_gray>右键解锁后仍留在手上")
+                : blueprint.getStringList("lore"));
+        definition.set("glint", blueprint == null || blueprint.getBoolean("glint", true));
+        definition.set("stackable", true);
+        definition.set("placeable", false);
+        definition.set("craftable", false);
+
+        plugin.items().register(new CustomItem(
+                plugin, plugin.items().itemKey(), "blueprint-" + setId, definition));
+        itemCount++;
     }
 
     private void loadArmor(String setId, ConfigurationSection armorSection) {

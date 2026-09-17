@@ -6,6 +6,8 @@ package com.seewo.cogito.listener;
 import com.seewo.cogito.CogitoPlugin;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
+import java.util.Locale;
+import org.bukkit.Keyed;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,6 +16,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 
 /**
  * 拦掉 Cogito 物品的「原版行为」。
@@ -52,6 +55,12 @@ public final class ItemBehaviourListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPrepareCraft(PrepareItemCraftEvent event) {
+        Recipe recipe = event.getRecipe();
+        // 插件自己注册的配方（例如开发台）允许使用自定义物品当材料
+        if (recipe instanceof Keyed keyed
+                && keyed.getKey().getNamespace().equalsIgnoreCase(plugin.getName().toLowerCase(Locale.ROOT))) {
+            return;
+        }
         for (ItemStack ingredient : event.getInventory().getMatrix()) {
             CustomItem item = plugin.items().identify(ingredient);
             if (item != null && !item.craftable()) {

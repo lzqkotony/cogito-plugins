@@ -89,3 +89,18 @@ items:
     placeable: false
     craftable: false
     aliases: [bough, 金枝]
+
+  # E.G.O. 开发台：外观是工作台，放下后由插件接管（记录坐标 + 全息文本 + 破坏保护）
+  develop-table:
+    material: CRAFTING_TABLE
+    display-name: "<gradient:#22d3a8:#facc15>开发台</gradient>"
+    lore:
+      - "<gray>用于研发 E.G.O. 的机器"
+      - "<dark_gray>先右键图纸解锁套装，再来这里研发"
+      - "<dark_gray>爆炸抗性同黑曜石 · 需钻石镐及以上破坏"
+    glint: true
+    custom-model-data: 91001
+    stackable: true
+    placeable: true
+    craftable: true
+    aliases: [table, 开发台]

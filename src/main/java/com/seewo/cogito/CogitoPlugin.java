@@ -7,6 +7,7 @@ import com.seewo.cogito.command.CogitoCommand;
 import com.seewo.cogito.command.EnkephalinCommand;
 import com.seewo.cogito.command.ExchangeCommand;
 import com.seewo.cogito.data.PlayerDataService;
+import com.seewo.cogito.develop.DevelopTableManager;
 import com.seewo.cogito.economy.VaultHook;
 import com.seewo.cogito.ego.EgoDamageService;
 import com.seewo.cogito.ego.EgoRegistry;
@@ -16,13 +17,20 @@ import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.item.ItemRegistry;
 import com.seewo.cogito.listener.EgoDamageListener;
 import com.seewo.cogito.listener.EgoEnchantListener;
+import com.seewo.cogito.item.CustomItem;
+import com.seewo.cogito.listener.DevelopListener;
 import com.seewo.cogito.listener.ItemBehaviourListener;
 import com.seewo.cogito.listener.PlayerDataListener;
 import com.seewo.cogito.listener.PlayerJoinListener;
 import com.seewo.cogito.text.Messages;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.RecipeChoice;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -39,6 +47,7 @@ public final class CogitoPlugin extends JavaPlugin {
     private ItemRegistry itemRegistry;
     private EgoRegistry egoRegistry;
     private EgoDamageService egoDamageService;
+    private DevelopTableManager developTableManager;
     private PlayerDataService dataService;
     private VaultHook vaultHook;
 
@@ -56,6 +65,7 @@ public final class CogitoPlugin extends JavaPlugin {
         this.egoRegistry = new EgoRegistry(this);
         this.egoRegistry.load();
         this.egoDamageService = new EgoDamageService(this);
+        this.developTableManager = new DevelopTableManager(this);
         this.enkephalinItem = new EnkephalinItem(this);
 
         this.dataService = new PlayerDataService(this);
@@ -77,6 +87,8 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EgoDamageListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoEnchantListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
+        getServer().getPluginManager().registerEvents(new DevelopListener(this), this);
+        registerDevelopTableRecipe();
 
         getLogger().info("已启用：脑啡肽物品 = " + enkephalinItem.material()
                 + "（标签 " + enkephalinItem.tagKey() + "）");
@@ -103,6 +115,7 @@ public final class CogitoPlugin extends JavaPlugin {
         this.egoRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook.setup();
+        registerDevelopTableRecipe();
     }
 
     /**
@@ -119,6 +132,7 @@ public final class CogitoPlugin extends JavaPlugin {
     }
 
     private void registerCommand(String name, TabExecutor executor) {
+        // 命令注册见 plugin.yml
         PluginCommand command = getCommand(name);
         if (command == null) {
             getLogger().severe("plugin.yml 中没有声明命令 /" + name);
@@ -146,6 +160,36 @@ public final class CogitoPlugin extends JavaPlugin {
 
     public EgoDamageService egoDamage() {
         return egoDamageService;
+    }
+
+    public DevelopTableManager developTables() {
+        return developTableManager;
+    }
+
+    /**
+     * 注册开发台的合成表：四角下界合金块、四边脑啡肽模块、中心工作台。
+     *
+     * <p>重载时会先移除旧配方再重新加，避免重复注册。
+     */
+    private void registerDevelopTableRecipe() {
+        NamespacedKey key = new NamespacedKey(this, "develop_table");
+        Bukkit.removeRecipe(key);
+        if (!getConfig().getBoolean("develop.table-recipe.enabled", true)) {
+            return;
+        }
+        CustomItem table = itemRegistry.find(DevelopListener.TABLE_ID);
+        CustomItem peModule = itemRegistry.find("pe-module");
+        if (table == null || peModule == null) {
+            getLogger().warning("开发台配方未注册：缺少 develop-table 或 pe-module 的物品定义");
+            return;
+        }
+        ShapedRecipe recipe = new ShapedRecipe(key, table.create(1));
+        recipe.shape("ABA", "BCB", "ABA");
+        recipe.setIngredient('A', new RecipeChoice.MaterialChoice(Material.NETHERITE_BLOCK));
+        recipe.setIngredient('B', new RecipeChoice.ExactChoice(peModule.create(1)));
+        recipe.setIngredient('C', new RecipeChoice.MaterialChoice(Material.CRAFTING_TABLE));
+        Bukkit.addRecipe(recipe);
+        getLogger().info("已注册开发台合成表：四角下界合金块 / 四边脑啡肽模块 / 中心工作台");
     }
 
     public VaultHook vault() {

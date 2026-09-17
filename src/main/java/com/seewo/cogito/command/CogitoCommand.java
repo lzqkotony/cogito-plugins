@@ -8,6 +8,7 @@ import com.seewo.cogito.data.PlayerDataStore;
 import com.seewo.cogito.data.PlayerProfile;
 import com.seewo.cogito.ego.DamageChannel;
 import com.seewo.cogito.ego.EgoEquipped;
+import com.seewo.cogito.ego.EgoSetDefinition;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
 import java.util.ArrayList;
@@ -99,6 +100,7 @@ public final class CogitoCommand implements TabExecutor {
             Messages.raw(sender, "<yellow>/" + label + " items <gray>- 列出所有已注册物品");
             Messages.raw(sender, "<yellow>/" + label + " give <物品id> <玩家> <数量> <gray>- 发放物品");
             Messages.raw(sender, "<yellow>/" + label + " give ego <玩家> <套装id> <数量> <gray>- 发放整套 E.G.O.");
+            Messages.raw(sender, "<yellow>/" + label + " give blueprint <玩家> <套装id> [数量] <gray>- 发放专属图纸");
             Messages.raw(sender, "<yellow>/" + label + " set Lv <玩家> <数字> <gray>- 设置玩家等级");
             Messages.raw(sender, "<yellow>/" + label + " reset player_information <玩家> <gray>- 重置玩家数据");
             Messages.raw(sender, "<yellow>/" + label + " data <玩家> <gray>- 查看玩家数据");
@@ -373,6 +375,59 @@ public final class CogitoCommand implements TabExecutor {
     }
 
     /** /cogito give <物品id> <玩家> <数量> —— 给玩家注册物品（仅 OP）。 */
+    /**
+     * /cogito give blueprint <玩家> <套装id> [数量] —— 发放某套 E.G.O. 的专属图纸。
+     *
+     * <p>图纸不是消耗品：右键解锁研发能力后仍然留在玩家手上。
+     */
+    private boolean giveBlueprint(CommandSender sender, String label, String[] args) {
+        if (!sender.hasPermission(PERMISSION_ADMIN)) {
+            Messages.send(sender, "<red>你没有权限执行这个操作");
+            return true;
+        }
+        if (args.length < 4) {
+            Messages.send(sender, "<red>用法：<white>/" + label + " give blueprint <玩家> <套装id> [数量]");
+            Messages.send(sender, "<gray>可用套装：<white>" + String.join(", ",
+                    plugin.ego().sets().stream().map(EgoSetDefinition::id).toList()));
+            return true;
+        }
+        EgoSetDefinition set = plugin.ego().set(args[3]);
+        if (set == null) {
+            Messages.send(sender, "<red>没有这套 E.G.O.：<white>" + args[3] + "</white>，可用："
+                    + String.join(", ", plugin.ego().sets().stream().map(EgoSetDefinition::id).toList()));
+            return true;
+        }
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            Messages.send(sender, "<red>找不到在线玩家 <white>" + args[2]);
+            return true;
+        }
+        int amount = 1;
+        if (args.length >= 5) {
+            try {
+                amount = Integer.parseInt(args[4]);
+            } catch (NumberFormatException error) {
+                Messages.send(sender, "<red>数量必须是整数");
+                return true;
+            }
+        }
+        if (amount <= 0) {
+            Messages.send(sender, "<red>数量必须大于 0");
+            return true;
+        }
+        CustomItem blueprint = plugin.items().find(set.blueprintId());
+        if (blueprint == null) {
+            Messages.send(sender, "<red>这张图纸没有注册成功，请检查 ego.yml");
+            return true;
+        }
+        give(target, blueprint, amount);
+        Messages.send(sender, "<green>已给 <white>" + target.getName() + "</white> " + amount
+                + " 张「" + set.displayName() + "<green>」专属图纸");
+        Messages.send(target, "<green>你收到了 <white>" + set.displayName()
+                + "<green> 的专属图纸，右键即可解锁研发能力（图纸不会消耗）");
+        return true;
+    }
+
     private boolean giveItem(CommandSender sender, String label, String[] args) {
         if (!sender.hasPermission(PERMISSION_ADMIN)) {
             Messages.send(sender, "<red>你没有权限执行这个操作");
@@ -387,6 +442,9 @@ public final class CogitoCommand implements TabExecutor {
         String rawId = args[1].toLowerCase(Locale.ROOT);
         if (rawId.equals("ego")) {
             return giveEgo(sender, label, args);
+        }
+        if (rawId.equals("blueprint")) {
+            return giveBlueprint(sender, label, args);
         }
         if (rawId.equals("aberrations") || rawId.equals("tool")) {
             Messages.send(sender, "<yellow>" + rawId + " 的发放还没实现（等异想体系统）");
@@ -569,9 +627,11 @@ public final class CogitoCommand implements TabExecutor {
             return onlinePlayers(prefix);
         } else if (sub.equals("give") && args.length == 3 && args[1].equalsIgnoreCase("ego")) {
             return onlinePlayers(prefix);
-        } else if (sub.equals("give") && args.length == 4 && args[1].equalsIgnoreCase("ego")) {
+        } else if (sub.equals("give") && args.length == 4
+                && (args[1].equalsIgnoreCase("ego") || args[1].equalsIgnoreCase("blueprint"))) {
             return plugin.ego().sets().stream().map(value -> value.id()).filter(id -> id.startsWith(prefix)).toList();
-        } else if (sub.equals("give") && args.length == 5 && args[1].equalsIgnoreCase("ego")) {
+        } else if (sub.equals("give") && args.length == 5
+                && (args[1].equalsIgnoreCase("ego") || args[1].equalsIgnoreCase("blueprint"))) {
             result.addAll(List.of("1", "2", "4"));
         } else if (args.length == 4 && sub.equals("give")) {
             result.addAll(List.of("1", "8", "64"));

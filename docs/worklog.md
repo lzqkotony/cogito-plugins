@@ -80,6 +80,20 @@
 - 正式服加载验证：识别 `Cogito v0.4.0-BETA`、注册 5 个基础物品和 1 套 E.G.O.（7 件）、SQLite 与 Vault 正常
 - 控制台自检：`/cogito items` 返回 12 个注册物品；`/cogito debug cogito` 识别到 `cogito:item=cogito`、堆叠上限 64、不可放置/合成
 
+## 2026-09-17 · 第一台机器（E.G.O. 开发台与专属图纸）
+
+- 设计稿（09-17 手写页）确认：开发台方块、专属图纸解锁研发、爆炸抗性同黑曜石、需钻石镐以上
+- 用户拍板：**图纸不是消耗品**，每套 E.G.O. 有自己专属的一张，右键解锁后仍留在手上；
+  研发规则用新的（解锁后每次研发只消耗脑啡肽）；代价与共鸣后面再说
+- 实现：
+  - `develop/DevelopTableManager`：开发台坐标记进**区块 PDC** + 上方 `TextDisplay` 全息文本
+  - `listener/DevelopListener`：放置登记、钻石镐限制、爆炸保护、右键开界面、图纸右键解锁
+  - `gui/DevelopMenu`：列出套装（抗性 / 消耗 / 是否解锁），点击消耗脑啡肽产出整套
+  - 合成表：四角下界合金块 / 四边脑啡肽模块 / 中心工作台（`ShapedRecipe`，重载时自动替换）
+  - 图纸物品由 `EgoRegistry` 按 `blueprint-<套装id>` 自动生成；`ego.yml` 新增 `develop.cost`
+  - 修正 `ItemBehaviourListener`：插件自己的配方允许使用自定义物品当材料
+- 版本 → **0.5.0-BETA**；`mvn clean test package` 通过（31 源文件、5/5 测试）
+
 ---
 
 ## 开发与交付方式

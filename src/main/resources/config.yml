@@ -18,6 +18,16 @@ gui:
   # 兑换按钮的档位，最多放 3 个；超过 max-per-exchange 的会被截断到上限
   exchange-amounts: [1, 8, 64]
 
+# ===== 开发台（E.G.O. 研发）=====
+develop:
+  # 开发台界面标题
+  title: "<gradient:#22d3a8:#facc15>开发台</gradient>"
+  # 方块上方的全息文本
+  hologram-text: "<gradient:#22d3a8:#facc15>开发台</gradient> <gray>· 右键研发"
+  # 合成表开关（四角下界合金块 / 四边脑啡肽模块 / 中心工作台）
+  table-recipe:
+    enabled: true
+
 # ===== 其它 =====
 debug: false
 

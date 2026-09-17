@@ -20,6 +20,16 @@ sets:
     # 示例值：失乐园统一 x=0.1。x 不设代码范围，直接按配置计算。
     armor-resistance: 0.1
 
+    # ===== 研发 =====
+    # 图纸只解锁研发能力（右键消耗一张），之后在开发台研发同一套不再需要图纸。
+    # 每次研发消耗 develop.cost 个脑啡肽。
+    develop:
+      cost: 64
+      blueprint:
+        material: PAPER
+        # 不填则自动用 "<E.G.O. 研发图纸 · 套装名>"
+        glint: true
+
     armor:
       helmet:
         material: NETHERITE_HELMET
