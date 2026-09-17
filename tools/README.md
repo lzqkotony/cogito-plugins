@@ -33,6 +33,9 @@ node tools/summarize-transcript.js chat/transcript-2026-09-15-machine2-env-gui.m
 
 ## ship.ps1
 
+> 版本号约定：同一功能线内递增补丁号（例如当前线是 `0.5.x`，下一个版本就是 `0.5.1`），
+> 开新功能线才升 minor（`0.6.0`）。
+
 一键发布流程（Windows）：**导出聊天记录 → 改版本号并构建 → 提交推送 → 打标签 → 发 Release**。
 
 ```powershell
