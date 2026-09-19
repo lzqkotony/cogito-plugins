@@ -33,6 +33,12 @@ class EgoMathTest {
     }
 
     @Test
+    void negativeResistanceBecomesPositiveVulnerabilityMultiplier() {
+        assertEquals(11.0D, EgoMath.resistanceFactor(-10.0D, 4), 1.0E-9D);
+        assertEquals(6.0D, EgoMath.resistanceFactor(-10.0D, 2), 1.0E-9D);
+    }
+
+    @Test
     void nonFiniteResistanceFallsBackToNormalDamage() {
         assertEquals(1.0D, EgoMath.resistanceFactor(Double.NaN, 4), 1.0E-9D);
     }

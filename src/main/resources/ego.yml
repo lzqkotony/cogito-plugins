@@ -5,29 +5,34 @@
 # 最终伤害倍率：1 - (1 - x) * y / 4
 #   满四件：r = x
 #   缺一件：r = 1 - (1 - x) * 3 / 4
+# 负抗性表示易伤：倍率 = 1 + (-x) * y / 4。
 #
 # 目前攻击侧只有 RED（红伤）和 BLUE（蓝伤）。
 # BLUE 只能由手持 attack-channel: BLUE 的 E.G.O. 武器发起；RED 作为普通攻击通道。
 #
 # E.G.O. 防具不可附魔，不提供原版护甲值/盔甲韧性。
 # 混入原版防具或其他 E.G.O. 防具时，整套抗性失效，按 r=1 处理。
+#
+# 0.5.1 研发：
+#   develop.armor.cost / develop.weapon.cost 是四档研发的共同基准 x。
+#   普通消耗 75%x、25% 成功；进阶 100%x、50%；高级 150%x、75%；完全 200%x、100%。
+#   蓝图是一次性装载物，装载后研发能力绑定玩家。
 
 enabled: true
 
 sets:
   paradise-lost:
     display-name: "<gradient:#facc15:#a855f7>失乐园</gradient>"
-    # 示例值：失乐园统一 x=0.1。x 不设代码范围，直接按配置计算。
     armor-resistance: 0.1
+    aliases: [paradise, 失乐园]
 
-    # ===== 研发 =====
-    # 图纸只解锁研发能力（右键消耗一张），之后在开发台研发同一套不再需要图纸。
-    # 每次研发消耗 develop.cost 个脑啡肽。
     develop:
-      cost: 64
+      armor:
+        cost: 64
+      weapon:
+        cost: 64
       blueprint:
         material: PAPER
-        # 不填则自动用 "<E.G.O. 研发图纸 · 套装名>"
         glint: true
 
     armor:
@@ -121,3 +126,218 @@ sets:
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+
+  justice-arbiter:
+    display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
+    armor-resistance: 0.25
+    aliases: [justice, arbiter, justice-arbiter, 正义裁决者]
+
+    develop:
+      armor:
+        cost: 400
+      weapon:
+        cost: 450
+      blueprint:
+        material: PAPER
+        glint: true
+
+    set-bonuses:
+      max-health-per-piece: 5
+      attack-speed:
+        "3": 0.5
+        "4": 0.5
+      attack-damage:
+        "4": 5
+      skill: judgement
+      skill-cooldown-seconds: 60
+
+    armor:
+      helmet:
+        material: IRON_HELMET
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者头盔</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
+          - "<gray>每件防具 +5 最大生命上限"
+          - "<gray>3 件起：+0.5 攻击速度"
+          - "<gray>4 件：额外 +0.5 攻速、+5 攻击"
+          - "<aqua>4 件解锁被动：审判"
+        glint: true
+        custom-model-data: 92101
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        armor-trim:
+          pattern: coast
+          material: diamond
+      chestplate:
+        material: DIAMOND_CHESTPLATE
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者胸甲</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
+          - "<gray>每件防具 +5 最大生命上限"
+          - "<gray>3 件起：+0.5 攻击速度"
+          - "<gray>4 件：额外 +0.5 攻速、+5 攻击"
+          - "<aqua>4 件解锁被动：审判"
+        glint: true
+        custom-model-data: 92102
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        armor-trim:
+          pattern: coast
+          material: netherite
+      leggings:
+        material: IRON_LEGGINGS
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者护腿</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
+          - "<gray>每件防具 +5 最大生命上限"
+          - "<gray>3 件起：+0.5 攻击速度"
+          - "<gray>4 件：额外 +0.5 攻速、+5 攻击"
+          - "<aqua>4 件解锁被动：审判"
+        glint: true
+        custom-model-data: 92103
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        armor-trim:
+          pattern: coast
+          material: diamond
+      boots:
+        material: DIAMOND_BOOTS
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者战靴</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
+          - "<gray>每件防具 +5 最大生命上限"
+          - "<gray>3 件起：+0.5 攻击速度"
+          - "<gray>4 件：额外 +0.5 攻速、+5 攻击"
+          - "<aqua>4 件解锁被动：审判"
+        glint: true
+        custom-model-data: 92104
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        armor-trim:
+          pattern: coast
+          material: netherite
+
+    weapons:
+      judgement-sword:
+        material: IRON_SWORD
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者·裁决之剑</gradient>"
+        lore:
+          - "<gray>攻击通道：<blue>蓝伤"
+          - "<gray>攻速：<white>0.4"
+          - "<gray>满蓄力攻击前方区域，造成 <white>5~6</white> 点蓝伤"
+          - "<dark_gray>范围：前方 6 格、左右各 1 格"
+          - "<aqua>特效：蓝色粒子"
+        glint: true
+        custom-model-data: 92105
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        attack-channel: BLUE
+        attributes:
+          attack-speed: 0.4
+          attack-damage: 0.0
+        ability:
+          type: justice-aoe
+          damage-min: 5
+          damage-max: 6
+          forward: 6
+          side: 1
+          height: 3
+          require-full-charge: true
+
+  # 彩蛋套装：不写进 README / Release Notes。
+  server-owner:
+    display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
+    armor-resistance: -10.0
+    aliases: [server_owner, sever_owner, owner, 服主]
+    hidden: true
+    developable: false
+    wear-requirement: OP
+
+    armor:
+      helmet:
+        material: GOLDEN_HELMET
+        display-name: "<gradient:#3b82f6:#facc15>服主之冠</gradient>"
+        lore:
+          - "<gray>穿戴任意一件后，获得服主级保护"
+          - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
+          - "<dark_gray>控制台仍保留全部权限"
+        glint: true
+        custom-model-data: 92201
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+      chestplate:
+        material: GOLDEN_CHESTPLATE
+        display-name: "<gradient:#3b82f6:#facc15>服主之甲</gradient>"
+        lore:
+          - "<gray>穿戴任意一件后，获得服主级保护"
+          - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
+          - "<dark_gray>控制台仍保留全部权限"
+        glint: true
+        custom-model-data: 92202
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+      leggings:
+        material: GOLDEN_LEGGINGS
+        display-name: "<gradient:#3b82f6:#facc15>服主之护腿</gradient>"
+        lore:
+          - "<gray>穿戴任意一件后，获得服主级保护"
+          - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
+          - "<dark_gray>控制台仍保留全部权限"
+        glint: true
+        custom-model-data: 92203
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+      boots:
+        material: GOLDEN_BOOTS
+        display-name: "<gradient:#3b82f6:#facc15>服主之靴</gradient>"
+        lore:
+          - "<gray>穿戴任意一件后，获得服主级保护"
+          - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
+          - "<dark_gray>控制台仍保留全部权限"
+        glint: true
+        custom-model-data: 92204
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+
+    weapons:
+      owner-blade:
+        material: IRON_SWORD
+        display-name: "<gradient:#3b82f6:#facc15>服主之剑</gradient>"
+        lore:
+          - "<gray>左键目标：<white>立即 kill"
+          - "<gray>右键目标：<white>立即 kick"
+          - "<gray>攻击距离：<white>10 格"
+          - "<gray>攻速：<white>3.2"
+          - "<dark_gray>无饰品；服主之意不可违逆"
+        glint: true
+        custom-model-data: 92205
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        attack-channel: BLUE
+        attributes:
+          attack-speed: 3.2
+          attack-damage: 0.0
+        ability:
+          type: server-owner
+          range: 10
+          message: "<red>服主之意不可违逆"

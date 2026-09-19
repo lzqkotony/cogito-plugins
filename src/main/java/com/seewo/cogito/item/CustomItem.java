@@ -6,21 +6,34 @@ package com.seewo.cogito.item;
 import com.google.common.collect.ImmutableMultimap;
 import com.seewo.cogito.CogitoPlugin;
 import com.seewo.cogito.ego.DamageChannel;
+import com.seewo.cogito.ego.EgoAbilityDefinition;
 import com.seewo.cogito.ego.EgoPiece;
 import com.seewo.cogito.text.Messages;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.trim.ArmorTrim;
+import org.bukkit.inventory.meta.trim.TrimMaterial;
+import org.bukkit.inventory.meta.trim.TrimPattern;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionType;
 
@@ -33,6 +46,7 @@ import org.bukkit.potion.PotionType;
  */
 public final class CustomItem {
 
+    private final CogitoPlugin plugin;
     private final String id;
     private final NamespacedKey itemKey;
     private final NamespacedKey egoSetKey;
@@ -58,6 +72,9 @@ public final class CustomItem {
     private final boolean enchantable;
     private final boolean unbreakable;
     private final boolean removeVanillaAttributes;
+    private final Map<Attribute, Double> attributes;
+    private final EgoAbilityDefinition ability;
+    private final ArmorTrim armorTrim;
 
     public CustomItem(CogitoPlugin plugin, NamespacedKey itemKey, String id, ConfigurationSection section) {
         this(plugin, itemKey, id, section, null, null, null);
@@ -71,6 +88,7 @@ public final class CustomItem {
             String egoSetId,
             EgoPiece egoPiece,
             DamageChannel damageChannel) {
+        this.plugin = plugin;
         this.id = id;
         this.itemKey = itemKey;
         this.egoSetKey = new NamespacedKey(plugin, "ego_set");
@@ -103,6 +121,9 @@ public final class CustomItem {
         this.enchantable = section.getBoolean("enchantable", this.egoSetId == null);
         this.unbreakable = section.getBoolean("unbreakable", this.egoSetId != null);
         this.removeVanillaAttributes = section.getBoolean("remove-vanilla-attributes", this.egoSetId != null);
+        this.attributes = parseAttributes(plugin, id, section.getConfigurationSection("attributes"));
+        this.ability = EgoAbilityDefinition.parse(section.getConfigurationSection("ability"));
+        this.armorTrim = parseArmorTrim(plugin, id, section.getConfigurationSection("armor-trim"));
 
         this.legacyKeys = new ArrayList<>();
         for (String legacy : section.getStringList("legacy-tags")) {
@@ -110,6 +131,50 @@ public final class CustomItem {
                 legacyKeys.add(new NamespacedKey(plugin, legacy.toLowerCase(Locale.ROOT).trim()));
             }
         }
+    }
+
+    private static Map<Attribute, Double> parseAttributes(
+            CogitoPlugin plugin,
+            String id,
+            ConfigurationSection section) {
+        if (section == null) {
+            return Map.of();
+        }
+        Map<Attribute, Double> result = new LinkedHashMap<>();
+        for (String rawName : section.getKeys(false)) {
+            Attribute attribute = Registry.ATTRIBUTE.get(key(rawName));
+            if (attribute == null) {
+                plugin.getLogger().warning("物品 " + id + " 的属性 " + rawName + " 无效，已忽略");
+                continue;
+            }
+            double value = section.getDouble(rawName);
+            if (Double.isFinite(value)) {
+                result.put(attribute, value);
+            }
+        }
+        return Collections.unmodifiableMap(result);
+    }
+
+    private static ArmorTrim parseArmorTrim(
+            CogitoPlugin plugin,
+            String id,
+            ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        String patternName = section.getString("pattern", "");
+        String materialName = section.getString("material", "");
+        if (patternName.isBlank() || materialName.isBlank()) {
+            return null;
+        }
+        TrimPattern pattern = Registry.TRIM_PATTERN.get(key(patternName));
+        TrimMaterial material = Registry.TRIM_MATERIAL.get(key(materialName));
+        if (pattern == null || material == null) {
+            plugin.getLogger().warning("物品 " + id + " 的盔甲纹饰无效：pattern="
+                    + patternName + ", material=" + materialName);
+            return null;
+        }
+        return new ArmorTrim(material, pattern);
     }
 
     private static Enchantment resolveEnchantment(CogitoPlugin plugin, String id, String name) {
@@ -183,6 +248,7 @@ public final class CustomItem {
                 // 空 multimap 会覆盖材质自带的护甲值 / 韧性属性。
                 meta.setAttributeModifiers(ImmutableMultimap.of());
             }
+            applyAttributes(meta);
             meta.getPersistentDataContainer().set(egoSetKey, PersistentDataType.STRING, egoSetId);
             if (egoPiece != null) {
                 meta.getPersistentDataContainer().set(egoPieceKey, PersistentDataType.STRING, egoPiece.name());
@@ -193,6 +259,10 @@ public final class CustomItem {
             }
         }
 
+        if (armorTrim != null && meta instanceof ArmorMeta armorMeta) {
+            armorMeta.setTrim(armorTrim);
+        }
+
         // 只有需要改动原版堆叠上限时才写这个组件（药水默认 1，写 64 才能堆叠）
         if (limit != Math.max(1, material.getMaxStackSize())) {
             meta.setMaxStackSize(limit);
@@ -201,6 +271,44 @@ public final class CustomItem {
 
         stack.setItemMeta(meta);
         return stack;
+    }
+
+    private void applyAttributes(ItemMeta meta) {
+        EquipmentSlotGroup slotGroup = slotGroup();
+        for (Map.Entry<Attribute, Double> entry : attributes.entrySet()) {
+            double amount = entry.getValue() - baseValue(entry.getKey());
+            if (Math.abs(amount) < 1.0E-9D) {
+                continue;
+            }
+            NamespacedKey modifierKey = new NamespacedKey(plugin,
+                    (id + "_" + entry.getKey().getKey().getKey()).toLowerCase(Locale.ROOT));
+            meta.addAttributeModifier(entry.getKey(),
+                    new AttributeModifier(modifierKey, amount, AttributeModifier.Operation.ADD_NUMBER, slotGroup));
+        }
+    }
+
+    private EquipmentSlotGroup slotGroup() {
+        if (egoPiece == null) {
+            return EquipmentSlotGroup.ANY;
+        }
+        return switch (egoPiece) {
+            case HELMET -> EquipmentSlotGroup.HEAD;
+            case CHESTPLATE -> EquipmentSlotGroup.CHEST;
+            case LEGGINGS -> EquipmentSlotGroup.LEGS;
+            case BOOTS -> EquipmentSlotGroup.FEET;
+            case WEAPON -> EquipmentSlotGroup.MAINHAND;
+            case ACCESSORY -> EquipmentSlotGroup.ANY;
+        };
+    }
+
+    private static double baseValue(Attribute attribute) {
+        if (Attribute.ATTACK_DAMAGE.equals(attribute)) {
+            return 1.0D;
+        }
+        if (Attribute.ATTACK_SPEED.equals(attribute)) {
+            return 4.0D;
+        }
+        return 0.0D;
     }
 
     /** 判断一个物品是不是本物品。 */
@@ -224,6 +332,44 @@ public final class CustomItem {
         }
         String value = meta.getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
         return id.equals(value);
+    }
+
+    /** 统计玩家身上该物品的总数。 */
+    public int countIn(Player player) {
+        int total = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (matches(item)) {
+                total += item.getAmount();
+            }
+        }
+        return total;
+    }
+
+    /** 从玩家身上扣除该物品，返回实际扣除数量。 */
+    public int removeFrom(Player player, int amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        PlayerInventory inventory = player.getInventory();
+        int remaining = amount;
+        int removed = 0;
+        for (int slot = 0; slot < inventory.getSize() && remaining > 0; slot++) {
+            ItemStack item = inventory.getItem(slot);
+            if (!matches(item)) {
+                continue;
+            }
+            int take = Math.min(item.getAmount(), remaining);
+            int left = item.getAmount() - take;
+            if (left <= 0) {
+                inventory.setItem(slot, null);
+            } else {
+                item.setAmount(left);
+                inventory.setItem(slot, item);
+            }
+            remaining -= take;
+            removed += take;
+        }
+        return removed;
     }
 
     /** 这个物品实际能堆多少。 */
@@ -285,5 +431,17 @@ public final class CustomItem {
 
     public boolean removeVanillaAttributes() {
         return removeVanillaAttributes;
+    }
+
+    public EgoAbilityDefinition ability() {
+        return ability;
+    }
+
+    public ArmorTrim armorTrim() {
+        return armorTrim;
+    }
+
+    public Map<Attribute, Double> attributes() {
+        return attributes;
     }
 }

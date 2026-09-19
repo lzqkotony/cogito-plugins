@@ -8,13 +8,16 @@ import com.seewo.cogito.command.EnkephalinCommand;
 import com.seewo.cogito.command.ExchangeCommand;
 import com.seewo.cogito.data.PlayerDataService;
 import com.seewo.cogito.develop.DevelopTableManager;
+import com.seewo.cogito.develop.EgoDevelopmentService;
 import com.seewo.cogito.economy.VaultHook;
 import com.seewo.cogito.ego.EgoDamageService;
 import com.seewo.cogito.ego.EgoRegistry;
+import com.seewo.cogito.ego.EgoSetBonusService;
 import com.seewo.cogito.gui.EnkephalinMenu;
 import com.seewo.cogito.gui.MenuListener;
 import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.item.ItemRegistry;
+import com.seewo.cogito.listener.EgoCombatListener;
 import com.seewo.cogito.listener.EgoDamageListener;
 import com.seewo.cogito.listener.EgoEnchantListener;
 import com.seewo.cogito.item.CustomItem;
@@ -22,6 +25,7 @@ import com.seewo.cogito.listener.DevelopListener;
 import com.seewo.cogito.listener.ItemBehaviourListener;
 import com.seewo.cogito.listener.PlayerDataListener;
 import com.seewo.cogito.listener.PlayerJoinListener;
+import com.seewo.cogito.listener.ServerOwnerProtectionListener;
 import com.seewo.cogito.text.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -47,6 +51,8 @@ public final class CogitoPlugin extends JavaPlugin {
     private ItemRegistry itemRegistry;
     private EgoRegistry egoRegistry;
     private EgoDamageService egoDamageService;
+    private EgoSetBonusService egoSetBonusService;
+    private EgoDevelopmentService egoDevelopmentService;
     private DevelopTableManager developTableManager;
     private PlayerDataService dataService;
     private VaultHook vaultHook;
@@ -65,6 +71,8 @@ public final class CogitoPlugin extends JavaPlugin {
         this.egoRegistry = new EgoRegistry(this);
         this.egoRegistry.load();
         this.egoDamageService = new EgoDamageService(this);
+        this.egoSetBonusService = new EgoSetBonusService(this);
+        this.egoDevelopmentService = new EgoDevelopmentService(this);
         this.developTableManager = new DevelopTableManager(this);
         this.enkephalinItem = new EnkephalinItem(this);
 
@@ -85,10 +93,13 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new ItemBehaviourListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoDamageListener(this), this);
+        getServer().getPluginManager().registerEvents(new EgoCombatListener(this), this);
+        getServer().getPluginManager().registerEvents(new ServerOwnerProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoEnchantListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
         getServer().getPluginManager().registerEvents(new DevelopListener(this), this);
         registerDevelopTableRecipe();
+        this.egoSetBonusService.start();
 
         getLogger().info("已启用：脑啡肽物品 = " + enkephalinItem.material()
                 + "（标签 " + enkephalinItem.tagKey() + "）");
@@ -101,6 +112,9 @@ public final class CogitoPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (egoSetBonusService != null) {
+            egoSetBonusService.stop();
+        }
         if (dataService != null) {
             dataService.shutdown();
         }
@@ -115,6 +129,9 @@ public final class CogitoPlugin extends JavaPlugin {
         this.egoRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook.setup();
+        if (egoSetBonusService != null) {
+            Bukkit.getOnlinePlayers().forEach(egoSetBonusService::reconcile);
+        }
         registerDevelopTableRecipe();
     }
 
@@ -160,6 +177,14 @@ public final class CogitoPlugin extends JavaPlugin {
 
     public EgoDamageService egoDamage() {
         return egoDamageService;
+    }
+
+    public EgoSetBonusService egoBonuses() {
+        return egoSetBonusService;
+    }
+
+    public EgoDevelopmentService egoDevelopment() {
+        return egoDevelopmentService;
     }
 
     public DevelopTableManager developTables() {

@@ -12,7 +12,8 @@ public final class EgoMath {
     /**
      * 计算最终伤害倍率。
      *
-     * <p>公式：{@code 1 - (1 - x) * y / 4}。x 不设范围，y 是当前穿着的有效防具件数。
+     * <p>非负抗性使用 {@code 1 - (1 - x) * y / 4}；负抗性表示易伤，使用
+     * {@code 1 + (-x) * y / 4}，保证倍率不会变成会反向治疗的负数。
      */
     public static double resistanceFactor(double resistance, int pieces) {
         if (!Double.isFinite(resistance)) {
@@ -22,7 +23,13 @@ public final class EgoMath {
         if (validPieces == 0) {
             return 1.0D;
         }
-        return 1.0D - (1.0D - resistance) * validPieces / 4.0D;
+        double factor;
+        if (resistance >= 0.0D) {
+            factor = 1.0D - (1.0D - resistance) * validPieces / 4.0D;
+        } else {
+            factor = 1.0D + (-resistance) * validPieces / 4.0D;
+        }
+        return Math.max(0.0D, factor);
     }
 
     /** 保留 double 精度，不做取整；是否接受负数由 Minecraft 最终处理。 */

@@ -32,6 +32,18 @@ public final class EgoDamageService {
         return true;
     }
 
+    /**
+     * 结算 E.G.O. 技能伤害。技能不要求当前手持 BLUE 武器，但仍从这里进入，保证
+     * 目标防具的 E.G.O. 抗性照常生效。
+     */
+    public boolean dealSkillDamage(Player source, LivingEntity target, double amount, DamageChannel channel) {
+        if (source == null || target == null || channel == null || !isValidAmount(amount)) {
+            return false;
+        }
+        target.damage(amount, source);
+        return true;
+    }
+
     private boolean isValidAmount(double amount) {
         return Double.isFinite(amount) && amount > 0.0D;
     }

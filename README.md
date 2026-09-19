@@ -35,7 +35,8 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 - **原版行为拦截**：注册物品不可放置、不可参与合成（可在 items.yml 关掉）；Cogito 也不能被当作药水饮用
 - **Vault 经济兑换**：`/exchange` 用服务器货币按 100:1 单向兑换脑啡肽（价格可配）
 - **玩家数据层（core data）**：SQLite 存档（等级、各异想体镇压次数、已解锁 E.G.O），上线读档 / 退服存档 / 定时异步落库
-- **E.G.O. 开发台与专属图纸**：图纸右键解锁该套研发能力（图纸不消耗），开发台右键研发、消耗脑啡肽产出整套；方块爆炸抗性同黑曜石、需钻石镐以上才能破坏
+- **E.G.O. 开发台与一次性蓝图**：蓝图装载后绑定玩家并消耗；护甲与武器分开研发，支持普通 / 进阶 / 高级 / 完全四档费用与成功率；开发台方块爆炸抗性同黑曜石、需钻石镐以上才能破坏
+- **套装能力与武器技能**：支持按防具件数 `y` 生效的最大生命、攻速、攻击力等套装属性和被动技能；`正义裁决者` 可在满蓄力时发动前方蓝伤范围攻击
 - **箱子 GUI**：`/cogito gui` 打开箱子样式的菜单，看持有量 / 余额，点按钮直接兑换（物品锁死，拿不走）
 - **准确的背包统计**：识别只看 NBT 标签，玩家改名、附魔、堆叠都不会失效，也无法伪造
 - **完整的管理命令**：发放 / 扣除 / 查看配置 / 热重载，带 Tab 补全与权限节点
@@ -63,8 +64,6 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 5. 看到下面这些日志就说明装好了：
 
 ```
-[Cogito] 已注册 5 个物品：pe, pe-module, cogito, ego-blueprint, golden-bough
-[Cogito] 已注册 1 套 E.G.O.，共 7 件物品
 [Cogito] 已启用：脑啡肽物品 = EMERALD（标签 cogito:item）
 [Cogito] Vault 经济已连接：EssentialsX Economy
 ```
@@ -87,7 +86,7 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 | `/cogito items` | 列出所有已注册物品 | `cogito.admin` | OP |
 | `/cogito give <物品id> <玩家> <数量>` | 发放注册物品（`pe` / `pe-module` / `cogito` …） | `cogito.admin` | OP |
 | `/cogito give ego <玩家> <套装id> <数量>` | 发放一整套 E.G.O.（防具、武器与饰品） | `cogito.admin` | OP |
-| `/cogito give blueprint <玩家> <套装id> [数量]` | 发放某套 E.G.O. 的专属图纸（不消耗） | `cogito.admin` | OP |
+| `/cogito give blueprint <玩家> <套装id> [数量]` | 发放某套 E.G.O. 的专属蓝图（装载时消耗 1 张） | `cogito.admin` | OP |
 | `/cogito debug <物品id>` | 造一个物品并打印材质、NBT、识别自检结果 | `cogito.admin` | OP |
 | `/cogito debug ego <玩家>` | 查看套装、防具件数 `y`、抗性 `x` 与最终倍率 `r` | `cogito.admin` | OP |
 | `/cogito debug attack <red\|blue> <攻击者> <目标> <伤害>` | 自检伤害通道与蓝伤来源限制 | `cogito.admin` | OP |
@@ -180,7 +179,7 @@ r = 1 - (1 - x) * y / 4
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.4.0-BETA.jar
+mvn clean package                       # 产物：target/Cogito-0.5.1.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -218,7 +217,8 @@ src/main/java/com/seewo/cogito/
 | v0.3 | 玩家数据层 core data（SQLite：等级 / 镇压次数 / E.G.O 解锁） | ✅ 已发布 0.3.0-Beta |
 | v0.4 | E.G.O. 红/蓝伤害通道、统一防具抗性、无限耐久与不可附魔；修复 Cogito 可饮用 | ✅ 已发布 0.4.0-Beta |
 | v0.5 | E.G.O. 开发台（自定义方块）+ 专属图纸解锁 + 研发流程 | ✅ 已发布 0.5.0-Beta |
-| v0.5.x | 同一功能线的修复与小功能：E.G.O. 使用代价、共鸣、饰品四部位…… | 🚧 下一个是 0.5.1 |
+| v0.5.1 | 一次性蓝图装载、四档定向研发、护甲/武器分类、正义裁决者、套装动态属性 | ✅ 本版 |
+| v0.5.x | 同一功能线的修复与小功能：E.G.O. 使用代价、共鸣、饰品四部位…… | 🚧 下一个 0.5.2 起 |
 | v0.6 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 📋 计划中 |
 | v0.7 | 随机 E.G.O. 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
 

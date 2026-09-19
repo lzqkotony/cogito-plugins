@@ -378,7 +378,7 @@ public final class CogitoCommand implements TabExecutor {
     /**
      * /cogito give blueprint <玩家> <套装id> [数量] —— 发放某套 E.G.O. 的专属图纸。
      *
-     * <p>图纸不是消耗品：右键解锁研发能力后仍然留在玩家手上。
+     * <p>0.5.1 起蓝图是一次性装载物：右键消耗一张，把研发能力绑定到该玩家。
      */
     private boolean giveBlueprint(CommandSender sender, String label, String[] args) {
         if (!sender.hasPermission(PERMISSION_ADMIN)) {
@@ -395,6 +395,10 @@ public final class CogitoCommand implements TabExecutor {
         if (set == null) {
             Messages.send(sender, "<red>没有这套 E.G.O.：<white>" + args[3] + "</white>，可用："
                     + String.join(", ", plugin.ego().sets().stream().map(EgoSetDefinition::id).toList()));
+            return true;
+        }
+        if (!set.developable() || set.blueprintId() == null) {
+            Messages.send(sender, "<red>这套 E.G.O. 没有可发放的研发蓝图");
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[2]);
@@ -417,14 +421,14 @@ public final class CogitoCommand implements TabExecutor {
         }
         CustomItem blueprint = plugin.items().find(set.blueprintId());
         if (blueprint == null) {
-            Messages.send(sender, "<red>这张图纸没有注册成功，请检查 ego.yml");
+            Messages.send(sender, "<red>这张蓝图没有注册成功，请检查 ego.yml");
             return true;
         }
         give(target, blueprint, amount);
         Messages.send(sender, "<green>已给 <white>" + target.getName() + "</white> " + amount
-                + " 张「" + set.displayName() + "<green>」专属图纸");
+                + " 张「" + set.displayName() + "<green>」专属蓝图");
         Messages.send(target, "<green>你收到了 <white>" + set.displayName()
-                + "<green> 的专属图纸，右键即可解锁研发能力（图纸不会消耗）");
+                + "<green> 的专属蓝图，右键装载后会消耗 1 张并绑定到你");
         return true;
     }
 

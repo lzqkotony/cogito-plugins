@@ -4,7 +4,6 @@
 package com.seewo.cogito.listener;
 
 import com.seewo.cogito.CogitoPlugin;
-import com.seewo.cogito.data.PlayerProfile;
 import com.seewo.cogito.ego.EgoSetDefinition;
 import com.seewo.cogito.gui.DevelopMenu;
 import com.seewo.cogito.item.CustomItem;
@@ -117,9 +116,7 @@ public final class DevelopListener implements Listener {
     }
 
     /**
-     * 手持图纸右键：解锁该套 E.G.O. 的研发能力。
-     *
-     * <p>图纸**不是消耗品**——每套 E.G.O. 有自己专属的一张，右键解锁后图纸留在玩家手上。
+     * 手持蓝图右键：消耗一张，解锁该套 E.G.O. 的研发能力并绑定给玩家。
      */
     private boolean unlockWithBlueprint(Player player, ItemStack hand) {
         CustomItem item = plugin.items().identify(hand);
@@ -129,24 +126,10 @@ public final class DevelopListener implements Listener {
         String setId = item.id().substring(BLUEPRINT_PREFIX.length());
         EgoSetDefinition set = plugin.ego().set(setId);
         if (set == null) {
-            Messages.send(player, "<red>这张图纸对应的套装不存在：" + setId);
+            Messages.send(player, "<red>这张蓝图对应的套装不存在：" + setId);
             return true;
         }
-
-        PlayerProfile profile = plugin.data().cached(player.getUniqueId());
-        if (profile == null) {
-            profile = plugin.data().join(player);
-        }
-        if (profile.isEgoUnlocked(set.id())) {
-            Messages.send(player, "<yellow>你已经解锁过 <white>" + set.displayName() + "</white> 的研发能力");
-            return true;
-        }
-
-        profile.unlockEgo(set.id());
-        plugin.data().saveAsync(profile);
-
-        Messages.send(player, "<green>已解锁 <white>" + set.displayName()
-                + "</white> 的研发能力。<gray>图纸会留在你手上，之后在开发台研发只需消耗脑啡肽。");
+        plugin.egoDevelopment().unlock(player, set, true);
         return true;
     }
 }

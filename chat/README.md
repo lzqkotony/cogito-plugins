@@ -1,6 +1,6 @@
 # 聊天记录与设计稿
 
-这个目录放着 Cogito 从零到现在（v0.4.0-BETA）的完整对话记录。
+这个目录放着 Cogito 从零到现在（v0.5.1）的完整对话记录。
 目的很直接：**换台电脑 `git clone` 下来，把这里的 md 丢给 Codex，就能接着写**，不用再从零解释一遍。
 
 ## 文件
@@ -11,12 +11,17 @@
 | `transcript-2026-09-15-machine2-env-gui.md` | 第二台机器：读交接包 → 搭离线开发环境 → 加箱子 GUI（`/cogito gui`）→ 推 GitHub |
 | `transcript-2026-09-16-machine3-items-registry.md` | 第三轮（回到第一台机器）：clone 最新代码 → 按第二批手写稿做物品注册表、自检命令 → 推 GitHub |
 | `transcript-2026-09-17-0.4.0-BETA.md` | 第四轮：确认 E.G.O. 红/蓝伤害与统一抗性规则 → 实现套装/防具/伤害通道 → 阻止 Cogito 饮用 → 部署正式服 → 发布 0.4.0 Beta |
+| `transcript-2026-09-17-0.5.0-develop-table.md` | 第五轮：开发台方块、专属图纸解锁、研发流程与发布 0.5.0 Beta |
+| `transcript-2026-09-19-0.5.1.md` | 第六轮：正义裁决者、隐藏彩蛋套装、一次性蓝图、四档定向研发与发布 0.5.1 |
 | `attachments/design-sketch-handwritten.jpg` | 最初的手写玩法设计稿原图（脑啡肽产出区间、E.G.O 三档失败率等） |
 | `../docs/worklog.md` | 开发工作记录：各轮做了什么、用户拍板过什么、待确认什么 |
 | `../docs/design.md` | 完整玩法设计（两批手写稿的整理版） |
 | `attachments/design-sketch-2026-09-16-1.jpg` | 第二批手写稿之一：整体设计思路、OP/非 OP 命令清单 |
 | `attachments/design-sketch-2026-09-16-2.jpg` | 第二批手写稿之二：注册物品表（脑啡肽/模块/Cogito/图纸/金枝）与"打 NBT 标签、不可放置合成"要求 |
 | `attachments/design-sketch-2026-09-16-3.jpg` | 第二批手写稿之三：异想体五阶、E.G.O 护甲/武器/饰品、抗性值与伤害公式 |
+| `attachments/design-sketch-2026-09-18-1-justice-arbiter.png` | 2026-09-18 手写稿之一：正义裁决者防具、套装特性、审判被动与武器 |
+| `attachments/design-sketch-2026-09-18-2-server-owner-easter-egg.png` | 2026-09-18 手写稿之二：隐藏彩蛋套装与武器能力 |
+| `attachments/design-sketch-2026-09-18-3-development-gui.png` | 2026-09-18 手写稿之三：开发台 GUI、蓝图装载与四档研发 |
 
 ## 新机器上怎么用
 
