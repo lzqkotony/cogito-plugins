@@ -32,7 +32,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.util.Vector;
 
-/** 0.5.1 的 E.G.O. 武器技能与「正义裁决者」整套被动。 */
+/** E.G.O. 武器技能与「正义裁决者」整套被动；0.5.2 起蓝伤按最大生命值百分比结算。 */
 public final class EgoCombatListener implements Listener {
 
     private static final String JUSTICE_AOE = "justice-aoe";
@@ -42,6 +42,7 @@ public final class EgoCombatListener implements Listener {
 
     private final CogitoPlugin plugin;
     private final Map<UUID, Long> judgementReadyAt = new ConcurrentHashMap<>();
+    private final Map<UUID, Long> lastJusticeSwingAt = new ConcurrentHashMap<>();
     private final ThreadLocal<Integer> abilityDepth = ThreadLocal.withInitial(() -> 0);
 
     public EgoCombatListener(CogitoPlugin plugin) {
@@ -54,7 +55,7 @@ public final class EgoCombatListener implements Listener {
             CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
             if (weapon != null && weapon.ability().is(JUSTICE_AOE)) {
                 event.setCancelled(true);
-                withSuppressedAbilities(() -> handleJusticeAttack(attacker, event.getEntity()));
+                tryJusticeSwing(attacker, event.getEntity());
                 return;
             }
             if (weapon != null && weapon.ability().is(SERVER_OWNER)) {
@@ -77,6 +78,13 @@ public final class EgoCombatListener implements Listener {
         }
         Player player = event.getPlayer();
         CustomItem weapon = plugin.items().identify(player.getInventory().getItemInMainHand());
+        if (weapon != null && weapon.ability().is(JUSTICE_AOE)
+                && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK)) {
+            event.setCancelled(true);
+            tryJusticeSwing(player, player.getTargetEntity(
+                    (int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false));
+            return;
+        }
         if (weapon == null || !weapon.ability().is(SERVER_OWNER)) {
             return;
         }
@@ -131,14 +139,32 @@ public final class EgoCombatListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         judgementReadyAt.remove(event.getPlayer().getUniqueId());
+        lastJusticeSwingAt.remove(event.getPlayer().getUniqueId());
+    }
+
+    private boolean tryJusticeSwing(Player attacker, Entity primaryTarget) {
+        CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
+        if (weapon == null || !weapon.ability().is(JUSTICE_AOE)) {
+            return false;
+        }
+        EgoAbilityDefinition ability = weapon.ability();
+        if (ability.requireFullCharge() && attacker.getAttackCooldown() < 0.90F) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        long previous = lastJusticeSwingAt.getOrDefault(attacker.getUniqueId(), 0L);
+        if (now - previous < 120L) {
+            return false;
+        }
+        lastJusticeSwingAt.put(attacker.getUniqueId(), now);
+        withSuppressedAbilities(() -> handleJusticeAttack(attacker, primaryTarget));
+        attacker.resetCooldown();
+        return true;
     }
 
     private void handleJusticeAttack(Player attacker, Entity primaryTarget) {
         EgoAbilityDefinition ability = plugin.items()
                 .identify(attacker.getInventory().getItemInMainHand()).ability();
-        if (ability.requireFullCharge() && attacker.getAttackCooldown() < 0.90F) {
-            return;
-        }
 
         Location eye = attacker.getEyeLocation();
         Vector forward = eye.getDirection().setY(0.0D);
@@ -163,7 +189,7 @@ public final class EgoCombatListener implements Listener {
 
         java.util.HashSet<UUID> hit = new java.util.HashSet<>();
         if (primaryTarget instanceof LivingEntity living && living != attacker) {
-            dealJusticeDamage(attacker, living, ability);
+            dealJusticeMultiHit(attacker, living, ability);
             hit.add(living.getUniqueId());
         }
         for (Entity entity : nearby) {
@@ -182,18 +208,29 @@ public final class EgoCombatListener implements Listener {
             if (Math.abs(relative.getY()) > verticalRange) {
                 continue;
             }
-            dealJusticeDamage(attacker, living, ability);
+            dealJusticeMultiHit(attacker, living, ability);
             hit.add(living.getUniqueId());
         }
 
         spawnBlueTrail(origin.clone().add(forward.clone().multiply(2.0D)), ability);
     }
 
-    private void dealJusticeDamage(Player attacker, LivingEntity target, EgoAbilityDefinition ability) {
-        double min = ability.minDamage();
-        double max = ability.maxDamage();
-        double damage = max <= min ? min : ThreadLocalRandom.current().nextDouble(min, max);
-        plugin.egoDamage().dealDamage(attacker, target, damage, DamageChannel.BLUE);
+    private void dealJusticeMultiHit(Player attacker, LivingEntity target, EgoAbilityDefinition ability) {
+        int minHits = ability.minHits();
+        int maxHits = ability.maxHits();
+        int hits = maxHits <= minHits
+                ? minHits
+                : ThreadLocalRandom.current().nextInt(minHits, maxHits + 1);
+        for (int i = 0; i < hits && target.isValid() && !target.isDead(); i++) {
+            double min = ability.minDamage();
+            double max = ability.maxDamage();
+            double damage = max <= min ? min : ThreadLocalRandom.current().nextDouble(min, max);
+            // PALE/蓝伤在 EgoDamageService 内按目标最大生命值百分比转换。
+            target.setNoDamageTicks(0);
+            if (!plugin.egoDamage().dealDamage(attacker, target, damage, DamageChannel.BLUE)) {
+                break;
+            }
+        }
     }
 
     private void spawnBlueTrail(Location center, EgoAbilityDefinition ability) {

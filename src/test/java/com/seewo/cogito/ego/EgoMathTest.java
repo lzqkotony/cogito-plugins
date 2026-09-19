@@ -42,4 +42,11 @@ class EgoMathTest {
     void nonFiniteResistanceFallsBackToNormalDamage() {
         assertEquals(1.0D, EgoMath.resistanceFactor(Double.NaN, 4), 1.0E-9D);
     }
+
+    @Test
+    void blueDamageUsesPercentageOfMaxHealth() {
+        assertEquals(1.0D, EgoMath.blueDamage(20.0D, 5.0D), 1.0E-9D);
+        assertEquals(15.0D, EgoMath.blueDamage(100.0D, 15.0D), 1.0E-9D);
+        assertEquals(0.0D, EgoMath.blueDamage(20.0D, 0.0D), 1.0E-9D);
+    }
 }

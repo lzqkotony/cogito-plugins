@@ -32,6 +32,18 @@ public final class EgoMath {
         return Math.max(0.0D, factor);
     }
 
+    /**
+     * Project Moon 的 PALE（插件界面称蓝伤）按目标最大生命值的百分比结算。
+     * 配置中的 5~6 蓝伤表示每段扣除目标最大生命值的 5%~6%。
+     */
+    public static double blueDamage(double maxHealth, double percentage) {
+        if (!Double.isFinite(maxHealth) || !Double.isFinite(percentage)
+                || maxHealth <= 0.0D || percentage <= 0.0D) {
+            return 0.0D;
+        }
+        return maxHealth * percentage / 100.0D;
+    }
+
     /** 保留 double 精度，不做取整；是否接受负数由 Minecraft 最终处理。 */
     public static double apply(double damage, double resistance, int pieces) {
         return damage * resistanceFactor(resistance, pieces);

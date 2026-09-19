@@ -11,6 +11,8 @@ public record EgoAbilityDefinition(
         String type,
         double minDamage,
         double maxDamage,
+        int minHits,
+        int maxHits,
         double range,
         int forwardBlocks,
         int sideBlocks,
@@ -19,13 +21,15 @@ public record EgoAbilityDefinition(
         String message) {
 
     public static EgoAbilityDefinition none() {
-        return new EgoAbilityDefinition(null, 0.0D, 0.0D, 0.0D, 0, 0, 0, false, null);
+        return new EgoAbilityDefinition(null, 0.0D, 0.0D, 1, 1, 0.0D, 0, 0, 0, false, null);
     }
 
     public EgoAbilityDefinition {
         type = type == null || type.isBlank() ? null : type.toLowerCase(Locale.ROOT).replace('_', '-');
         minDamage = Math.max(0.0D, minDamage);
         maxDamage = Math.max(minDamage, maxDamage);
+        minHits = Math.max(1, minHits);
+        maxHits = Math.max(minHits, maxHits);
         range = Math.max(0.0D, range);
         forwardBlocks = Math.max(0, forwardBlocks);
         sideBlocks = Math.max(0, sideBlocks);
@@ -44,6 +48,8 @@ public record EgoAbilityDefinition(
                 type,
                 section.getDouble("damage-min", 0.0D),
                 section.getDouble("damage-max", section.getDouble("damage-min", 0.0D)),
+                section.getInt("hits-min", 1),
+                section.getInt("hits-max", section.getInt("hits-min", 1)),
                 section.getDouble("range", 0.0D),
                 section.getInt("forward", 0),
                 section.getInt("side", 0),

@@ -28,7 +28,7 @@ public final class EgoDamageService {
         if (channel == DamageChannel.BLUE && !plugin.ego().canDealBlue(attacker)) {
             return false;
         }
-        target.damage(amount, attacker);
+        target.damage(resolveAmount(target, amount, channel), attacker);
         return true;
     }
 
@@ -40,8 +40,14 @@ public final class EgoDamageService {
         if (source == null || target == null || channel == null || !isValidAmount(amount)) {
             return false;
         }
-        target.damage(amount, source);
+        target.damage(resolveAmount(target, amount, channel), source);
         return true;
+    }
+
+    private double resolveAmount(LivingEntity target, double amount, DamageChannel channel) {
+        return channel == DamageChannel.BLUE
+                ? EgoMath.blueDamage(target.getMaxHealth(), amount)
+                : amount;
     }
 
     private boolean isValidAmount(double amount) {

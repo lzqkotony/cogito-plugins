@@ -23,6 +23,7 @@ public final class PlayerJoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerJoin(PlayerJoinEvent event) {
+        plugin.items().refreshInventory(event.getPlayer());
         String template = plugin.getConfig().getString("join-message", "");
         if (template == null || template.isBlank()) {
             return;

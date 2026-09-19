@@ -311,6 +311,14 @@ public final class CustomItem {
         return 0.0D;
     }
 
+    /** 用当前定义刷新一个旧版本物品，保留堆叠数量。 */
+    public ItemStack refresh(ItemStack stack) {
+        if (!matches(stack)) {
+            return stack;
+        }
+        return create(stack.getAmount());
+    }
+
     /** 判断一个物品是不是本物品。 */
     public boolean matches(ItemStack stack) {
         if (stack == null || stack.getAmount() <= 0) {

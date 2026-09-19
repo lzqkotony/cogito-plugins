@@ -145,7 +145,6 @@ sets:
       max-health-per-piece: 5
       attack-speed:
         "3": 0.5
-        "4": 0.5
       attack-damage:
         "4": 5
       skill: judgement
@@ -154,7 +153,7 @@ sets:
     armor:
       helmet:
         material: IRON_HELMET
-        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者头盔</gradient>"
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
           - "<gray>每件防具 +5 最大生命上限"
@@ -172,7 +171,7 @@ sets:
           material: diamond
       chestplate:
         material: DIAMOND_CHESTPLATE
-        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者胸甲</gradient>"
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
           - "<gray>每件防具 +5 最大生命上限"
@@ -190,7 +189,7 @@ sets:
           material: netherite
       leggings:
         material: IRON_LEGGINGS
-        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者护腿</gradient>"
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
           - "<gray>每件防具 +5 最大生命上限"
@@ -208,7 +207,7 @@ sets:
           material: diamond
       boots:
         material: DIAMOND_BOOTS
-        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者战靴</gradient>"
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
           - "<gray>每件防具 +5 最大生命上限"
@@ -228,11 +227,12 @@ sets:
     weapons:
       judgement-sword:
         material: IRON_SWORD
-        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者·裁决之剑</gradient>"
+        display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>攻击通道：<blue>蓝伤"
           - "<gray>攻速：<white>0.4"
-          - "<gray>满蓄力攻击前方区域，造成 <white>5~6</white> 点蓝伤"
+          - "<gray>满蓄力挥剑，对前方区域造成 <white>8~10</white> 段蓝伤"
+          - "<gray>每段为最大生命值的 <white>5~6%"
           - "<dark_gray>范围：前方 6 格、左右各 1 格"
           - "<aqua>特效：蓝色粒子"
         glint: true
@@ -249,6 +249,8 @@ sets:
           type: justice-aoe
           damage-min: 5
           damage-max: 6
+          hits-min: 8
+          hits-max: 10
           forward: 6
           side: 1
           height: 3

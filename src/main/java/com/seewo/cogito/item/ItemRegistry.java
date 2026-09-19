@@ -13,7 +13,10 @@ import java.util.Map;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 /** 物品注册表：从 items.yml 读取所有 Cogito 物品定义。 */
 public final class ItemRegistry {
@@ -103,6 +106,34 @@ public final class ItemRegistry {
 
     public Collection<CustomItem> all() {
         return items.values();
+    }
+
+    /** 登录或热重载后，用最新定义刷新玩家身上已有的 Cogito 物品。 */
+    public void refreshInventory(Player player) {
+        if (player == null) {
+            return;
+        }
+        PlayerInventory inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            ItemStack current = inventory.getItem(slot);
+            CustomItem item = identify(current);
+            if (item != null) {
+                inventory.setItem(slot, item.refresh(current));
+            }
+        }
+        refreshArmorSlot(inventory, EquipmentSlot.HEAD);
+        refreshArmorSlot(inventory, EquipmentSlot.CHEST);
+        refreshArmorSlot(inventory, EquipmentSlot.LEGS);
+        refreshArmorSlot(inventory, EquipmentSlot.FEET);
+        refreshArmorSlot(inventory, EquipmentSlot.OFF_HAND);
+    }
+
+    private void refreshArmorSlot(PlayerInventory inventory, EquipmentSlot slot) {
+        ItemStack current = inventory.getItem(slot);
+        CustomItem item = identify(current);
+        if (item != null) {
+            inventory.setItem(slot, item.refresh(current));
+        }
     }
 
     public boolean isEmpty() {

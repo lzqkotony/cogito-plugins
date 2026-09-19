@@ -129,6 +129,7 @@ public final class CogitoPlugin extends JavaPlugin {
         this.egoRegistry.load();
         this.enkephalinItem = new EnkephalinItem(this);
         this.vaultHook.setup();
+        Bukkit.getOnlinePlayers().forEach(itemRegistry::refreshInventory);
         if (egoSetBonusService != null) {
             Bukkit.getOnlinePlayers().forEach(egoSetBonusService::reconcile);
         }
