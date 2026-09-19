@@ -10,8 +10,8 @@ Release 仓库：[lzqkotony/download](https://github.com/lzqkotony/download/rele
 国内 GitHub 代理地址：
 
 ```text
-https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
-https://v4.gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.0.1/dist/Cogito-Resources-BE.zip
+https://gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
+https://gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.0.1/dist/Cogito-Resources-BE.zip
 ```
 
 ## Java 配置
@@ -19,7 +19,7 @@ https://v4.gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.
 `server.properties`：
 
 ```properties
-resource-pack=https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
+resource-pack=https://gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
 resource-pack-sha1=30637ec6a8dfbc9259c6587b5ce1278f8bed30ed
 require-resource-pack=false
 ```
@@ -36,7 +36,7 @@ gameplay:
 
 advanced:
   resource-pack-urls:
-    - "https://v4.gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.0.1/dist/Cogito-Resources-BE.zip"
+    - "https://gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.0.1/dist/Cogito-Resources-BE.zip"
 ```
 
 ## 物品模型约定
