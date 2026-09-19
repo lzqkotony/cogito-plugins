@@ -78,7 +78,8 @@ items:
     aliases: [blueprint, 图纸]
 
   golden-bough:
-    material: STICK
+    material: DEAD_BUSH
+    item-model: cogito:golden_bough
     display-name: "<gradient:#fbbf24:#f59e0b>金枝</gradient>"
     lore:
       - "<gray>脑叶公司的遗产之一"

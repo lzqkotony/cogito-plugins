@@ -123,7 +123,7 @@ join-message: ""                   # 玩家进服提示，留空则不发送
 | `pe-module` | 脑啡肽模块 | 绿宝石块 | 提取异想体所必备，别名 `PE-BOX` |
 | `cogito` | Cogito | 跳跃药水 | 堆叠上限已改成 64 |
 | `ego-blueprint` | E.G.O 研发图纸 | 纸 | 后续 E.G.O 开发消耗 |
-| `golden-bough` | 金枝 | 树枝 | 脑叶公司奇点的核心浓缩 |
+| `golden-bough` | 金枝 | 枯木 + `cogito:golden_bough` 模型 | 脑叶公司奇点的核心浓缩 |
 
 每个物品都能配：`material`、`display-name`、`lore`、`potion-type`、`enchantment`、`glint`、`custom-model-data`、`stack-size`、`stackable`、`placeable`、`craftable`、`aliases`、`legacy-tags`。
 
@@ -175,12 +175,23 @@ r = 1 - (1 - x) * y / 4
 
 > 物品身份由 NBT 标签 `cogito:item` 决定。老版本用过的标签写进 `legacy-tags`（脑啡肽已写 `enkephalin`），服务器里的老物品照样能被识别，不会因为改版变废纸。
 
+## 资源包（金枝自定义外观）
+
+- Java 资源包：[Cogito-Resources-JE.zip](https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-JE.zip)
+- Bedrock / Geyser：[Cogito-Resources-BE.mcpack](https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-BE.mcpack)
+- 国内 GitHub 代理：在 GitHub 下载链接前加 `https://v4.gh-proxy.com/`
+- Java 版通过 `minecraft:item_model` 使用 `cogito:golden_bough`；Bedrock 版通过 Geyser `custom_mappings` 映射同名模型
+
+资源包仓库：[lzqkotony/download](https://github.com/lzqkotony/download)
+
+详细配置见 [docs/resource-pack.md](docs/resource-pack.md)。
+
 ## 从源码构建
 
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.5.4.jar
+mvn clean package                       # 产物：target/Cogito-0.5.5.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -221,8 +232,9 @@ src/main/java/com/seewo/cogito/
 | v0.5.1 | 一次性蓝图装载、四档定向研发、护甲/武器分类、正义裁决者、套装动态属性 | ✅ 已发布 0.5.1 |
 | v0.5.2 | 正义裁决者统一命名、PALE 蓝伤百分比、满蓄力挥剑触发 8~10 段范围伤害、修正套装攻速叠加 | ✅ 已发布 0.5.2 |
 | v0.5.3 | 改用手臂挥动事件触发正义裁决者、服主剑左键击杀、未装载蓝图装备仍显示、正义裁决者全套铁甲+钻石海岸纹饰 | ✅ 已发布 0.5.3 |
-| v0.5.4 | 正义裁决者简化为单段固定 5~6 蓝伤、4.0 攻速、6 格距离；服主套改为钻石甲+末地纹饰+金锭装饰 | ✅ 本版 |
-| v0.5.x | 同一功能线的修复与小功能：E.G.O. 使用代价、共鸣、饰品四部位…… | 🚧 下一个 0.5.5 起 |
+| v0.5.4 | 正义裁决者简化为单段固定 5~6 蓝伤、4.0 攻速、6 格距离；服主套改为钻石甲+末地纹饰+金锭装饰 | ✅ 已发布 0.5.4 |
+| v0.5.5 | 金枝改为枯木底材 + `item_model` 自定义模型，接入 Java/Bedrock 双端资源包和 GitHub 代理下载 | ✅ 本版 |
+| v0.5.x | 同一功能线的修复与小功能：E.G.O. 使用代价、共鸣、饰品四部位…… | 🚧 下一个 0.5.6 起 |
 | v0.6 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 📋 计划中 |
 | v0.7 | 随机 E.G.O. 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
 

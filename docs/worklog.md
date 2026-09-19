@@ -143,6 +143,16 @@
 - 服主套装护甲外观改为：钻石头盔 / 胸甲 / 护腿 / 靴子 + `spire`（末地城）盔甲纹饰 + 金锭纹饰材质。
 - 版本 → **0.5.4**
 
+## 2026-09-20 · 0.5.5（金枝双端资源包）
+
+- 为金枝制作 Java + Bedrock/Geyser 双端资源包：
+  - Java 使用 `DEAD_BUSH` + `item_model: cogito:golden_bough`
+  - Bedrock 使用 `cogito:golden_bough` 自定义物品纹理与 Geyser v2 `custom_mappings`
+  - 资源包发布到公开仓库 `lzqkotony/download` 的 `v1.0.0` Release
+- 下载地址使用 `https://v4.gh-proxy.com/https://github.com/...` 代理，照顾国内网络。
+- Cogito 插件新增 `item-model` 配置支持；旧 STICK 金枝登录/热重载时自动刷新为枯木模型，不需要重新发放。
+- 版本 → **0.5.5**
+
 ---
 
 ## 开发与交付方式

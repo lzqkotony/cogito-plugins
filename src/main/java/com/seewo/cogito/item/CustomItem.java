@@ -61,6 +61,7 @@ public final class CustomItem {
     private final boolean hideEnchants;
     private final boolean glint;
     private final int customModelData;
+    private final NamespacedKey itemModel;
     private final int stackSize;
     private final boolean stackable;
     private final boolean placeable;
@@ -113,6 +114,7 @@ public final class CustomItem {
         this.hideEnchants = section.getBoolean("hide-enchants", true);
         this.glint = section.getBoolean("glint", true);
         this.customModelData = section.getInt("custom-model-data", 0);
+        this.itemModel = resolveItemModel(plugin, id, section.getString("item-model", ""));
         this.stackSize = Math.max(0, section.getInt("stack-size", 0));
         this.stackable = this.egoSetId == null && section.getBoolean("stackable", true);
         this.placeable = section.getBoolean("placeable", false);
@@ -177,6 +179,17 @@ public final class CustomItem {
         return new ArmorTrim(material, pattern);
     }
 
+    private static NamespacedKey resolveItemModel(CogitoPlugin plugin, String id, String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        NamespacedKey key = NamespacedKey.fromString(value.trim());
+        if (key == null) {
+            plugin.getLogger().warning("物品 " + id + " 的 item-model 无效：" + value);
+        }
+        return key;
+    }
+
     private static Enchantment resolveEnchantment(CogitoPlugin plugin, String id, String name) {
         if (name == null || name.isBlank()) {
             return null;
@@ -235,6 +248,9 @@ public final class CustomItem {
         }
         if (customModelData > 0) {
             meta.setCustomModelData(customModelData);
+        }
+        if (itemModel != null) {
+            meta.setItemModel(itemModel);
         }
 
         if (egoSetId != null) {
@@ -335,9 +351,7 @@ public final class CustomItem {
                 return true;
             }
         }
-        if (stack.getType() != material) {
-            return false;
-        }
+        // 材质允许随资源包迁移；真正的身份始终以 NBT id 为准。
         String value = meta.getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
         return id.equals(value);
     }
@@ -407,6 +421,10 @@ public final class CustomItem {
 
     public int customModelData() {
         return customModelData;
+    }
+
+    public NamespacedKey itemModel() {
+        return itemModel;
     }
 
     public boolean placeable() {
