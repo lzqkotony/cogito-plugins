@@ -177,8 +177,8 @@ r = 1 - (1 - x) * y / 4
 
 ## 资源包（金枝自定义外观）
 
-- Java 资源包：[Cogito-Resources-JE.zip](https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-JE.zip)
-- Bedrock / Geyser：[Cogito-Resources-BE.mcpack](https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-BE.mcpack)
+- Java 资源包：[Cogito-Resources-JE.zip](https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip)
+- Bedrock / Geyser：[Cogito-Resources-BE.mcpack](https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-BE.zip)
 - 国内 GitHub 代理：在 GitHub 下载链接前加 `https://v4.gh-proxy.com/`
 - Java 版通过 `minecraft:item_model` 使用 `cogito:golden_bough`；Bedrock 版通过 Geyser `custom_mappings` 映射同名模型
 

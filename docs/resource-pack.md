@@ -5,13 +5,13 @@
 - Java：`Cogito-Resources-JE.zip`
 - Bedrock/Geyser：`Cogito-Resources-BE.mcpack`
 
-Release 仓库：[lzqkotony/download](https://github.com/lzqkotony/download/releases/tag/v1.0.0)
+Release 仓库：[lzqkotony/download](https://github.com/lzqkotony/download/releases/tag/v1.0.1)
 
 国内 GitHub 代理地址：
 
 ```text
-https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-JE.zip
-https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-BE.mcpack
+https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
+https://v4.gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.0.1/dist/Cogito-Resources-BE.zip
 ```
 
 ## Java 配置
@@ -19,7 +19,7 @@ https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/
 `server.properties`：
 
 ```properties
-resource-pack=https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-JE.zip
+resource-pack=https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
 resource-pack-sha1=dbc06a5fc9f773afc42a4f18b8f0f99b34720cd9
 require-resource-pack=false
 ```
@@ -36,7 +36,7 @@ gameplay:
 
 advanced:
   resource-pack-urls:
-    - "https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.0/Cogito-Resources-BE.mcpack"
+    - "https://v4.gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.0.1/dist/Cogito-Resources-BE.zip"
 ```
 
 ## 物品模型约定
