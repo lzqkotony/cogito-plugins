@@ -20,7 +20,7 @@ https://v4.gh-proxy.com/https://raw.githubusercontent.com/lzqkotony/download/v1.
 
 ```properties
 resource-pack=https://v4.gh-proxy.com/https://github.com/lzqkotony/download/releases/download/v1.0.1/Cogito-Resources-JE.zip
-resource-pack-sha1=dbc06a5fc9f773afc42a4f18b8f0f99b34720cd9
+resource-pack-sha1=30637ec6a8dfbc9259c6587b5ce1278f8bed30ed
 require-resource-pack=false
 ```
 
