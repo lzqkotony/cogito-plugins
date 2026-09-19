@@ -170,7 +170,7 @@ sets:
           pattern: coast
           material: diamond
       chestplate:
-        material: DIAMOND_CHESTPLATE
+        material: IRON_CHESTPLATE
         display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
@@ -186,7 +186,7 @@ sets:
         remove-vanilla-attributes: true
         armor-trim:
           pattern: coast
-          material: netherite
+          material: diamond
       leggings:
         material: IRON_LEGGINGS
         display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
@@ -206,7 +206,7 @@ sets:
           pattern: coast
           material: diamond
       boots:
-        material: DIAMOND_BOOTS
+        material: IRON_BOOTS
         display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.25"
@@ -222,7 +222,7 @@ sets:
         remove-vanilla-attributes: true
         armor-trim:
           pattern: coast
-          material: netherite
+          material: diamond
 
     weapons:
       judgement-sword:
@@ -268,7 +268,7 @@ sets:
     armor:
       helmet:
         material: GOLDEN_HELMET
-        display-name: "<gradient:#3b82f6:#facc15>服主之冠</gradient>"
+        display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
           - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
@@ -281,7 +281,7 @@ sets:
         remove-vanilla-attributes: true
       chestplate:
         material: GOLDEN_CHESTPLATE
-        display-name: "<gradient:#3b82f6:#facc15>服主之甲</gradient>"
+        display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
           - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
@@ -294,7 +294,7 @@ sets:
         remove-vanilla-attributes: true
       leggings:
         material: GOLDEN_LEGGINGS
-        display-name: "<gradient:#3b82f6:#facc15>服主之护腿</gradient>"
+        display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
           - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
@@ -307,7 +307,7 @@ sets:
         remove-vanilla-attributes: true
       boots:
         material: GOLDEN_BOOTS
-        display-name: "<gradient:#3b82f6:#facc15>服主之靴</gradient>"
+        display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
           - "<gray>其他 OP 与命令方块无法对你执行 kill / kick / ban / effect"
@@ -322,7 +322,7 @@ sets:
     weapons:
       owner-blade:
         material: IRON_SWORD
-        display-name: "<gradient:#3b82f6:#facc15>服主之剑</gradient>"
+        display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>左键目标：<white>立即 kill"
           - "<gray>右键目标：<white>立即 kick"

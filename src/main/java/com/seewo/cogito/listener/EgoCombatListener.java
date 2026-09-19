@@ -25,6 +25,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerKickEvent;
@@ -78,13 +80,6 @@ public final class EgoCombatListener implements Listener {
         }
         Player player = event.getPlayer();
         CustomItem weapon = plugin.items().identify(player.getInventory().getItemInMainHand());
-        if (weapon != null && weapon.ability().is(JUSTICE_AOE)
-                && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK)) {
-            event.setCancelled(true);
-            tryJusticeSwing(player, player.getTargetEntity(
-                    (int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false));
-            return;
-        }
         if (weapon == null || !weapon.ability().is(SERVER_OWNER)) {
             return;
         }
@@ -107,6 +102,32 @@ public final class EgoCombatListener implements Listener {
 
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             event.setCancelled(true);
+            if (target instanceof LivingEntity living) {
+                killWithOwnerWeapon(player, living);
+            }
+        }
+    }
+
+    /**
+     * 挥动手臂时触发正义裁决者。这个事件不要求光标命中实体，能覆盖空中挥剑和命中实体两种情况。
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onSwing(PlayerAnimationEvent event) {
+        if (event.getAnimationType() != PlayerAnimationType.ARM_SWING) {
+            return;
+        }
+        Player player = event.getPlayer();
+        CustomItem weapon = plugin.items().identify(player.getInventory().getItemInMainHand());
+        if (weapon == null) {
+            return;
+        }
+        if (weapon.ability().is(JUSTICE_AOE)) {
+            tryJusticeSwing(player, null);
+            return;
+        }
+        if (weapon.ability().is(SERVER_OWNER)) {
+            Entity target = player.getTargetEntity(
+                    (int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false);
             if (target instanceof LivingEntity living) {
                 killWithOwnerWeapon(player, living);
             }

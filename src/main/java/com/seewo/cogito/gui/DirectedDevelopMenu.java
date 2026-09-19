@@ -123,8 +123,8 @@ public final class DirectedDevelopMenu extends Menu {
         List<Entry> result = new ArrayList<>();
         for (EgoSetDefinition set : plugin().ego().developableSets()) {
             for (EgoDevelopCategory category : EgoDevelopCategory.values()) {
-                if (set.canDevelop(category)
-                        && !plugin().ego().itemsForSet(set.id(), category).isEmpty()) {
+                // 未装载蓝图也必须显示装备，让玩家知道该套可研发；点击后再提示装载蓝图。
+                if (!plugin().ego().itemsForSet(set.id(), category).isEmpty()) {
                     result.add(new Entry(set, category));
                 }
             }
@@ -163,7 +163,9 @@ public final class DirectedDevelopMenu extends Menu {
                 + " <gray>· " + entry.category().displayName()));
         List<Component> lore = new ArrayList<>();
         int baseCost = entry.set().developCost(entry.category());
-        lore.add(Messages.of("<gray>基础脑啡肽 x = <white>" + baseCost));
+        lore.add(Messages.of(baseCost >= 0
+                ? "<gray>基础脑啡肽 x = <white>" + baseCost
+                : "<red>该分类尚未配置研发费用"));
         if (!unlocked) {
             lore.add(Messages.of("<red>未装载蓝图"));
             lore.add(Messages.of("<gray>需要：<white>" + entry.set().displayName() + " 专属蓝图"));
