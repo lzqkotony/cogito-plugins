@@ -38,6 +38,7 @@ import org.bukkit.util.Vector;
 public final class EgoCombatListener implements Listener {
 
     private static final String JUSTICE_AOE = "justice-aoe";
+    private static final String JUSTICE_STRIKE = "justice-strike";
     private static final String SERVER_OWNER = "server-owner";
     private static final String JUDGEMENT = "judgement";
     private static final double JUDGEMENT_DAMAGE = 15.0D;
@@ -55,7 +56,7 @@ public final class EgoCombatListener implements Listener {
     public void onDamage(EntityDamageByEntityEvent event) {
         if (abilityDepth.get() == 0 && event.getDamager() instanceof Player attacker) {
             CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
-            if (weapon != null && weapon.ability().is(JUSTICE_AOE)) {
+            if (weapon != null && (weapon.ability().is(JUSTICE_AOE) || weapon.ability().is(JUSTICE_STRIKE))) {
                 event.setCancelled(true);
                 tryJusticeSwing(attacker, event.getEntity());
                 return;
@@ -121,8 +122,10 @@ public final class EgoCombatListener implements Listener {
         if (weapon == null) {
             return;
         }
-        if (weapon.ability().is(JUSTICE_AOE)) {
-            tryJusticeSwing(player, null);
+        if (weapon.ability().is(JUSTICE_AOE) || weapon.ability().is(JUSTICE_STRIKE)) {
+            Entity target = player.getTargetEntity(
+                    (int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false);
+            tryJusticeSwing(player, target);
             return;
         }
         if (weapon.ability().is(SERVER_OWNER)) {
@@ -165,7 +168,8 @@ public final class EgoCombatListener implements Listener {
 
     private boolean tryJusticeSwing(Player attacker, Entity primaryTarget) {
         CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
-        if (weapon == null || !weapon.ability().is(JUSTICE_AOE)) {
+        if (weapon == null || (weapon.ability().is(JUSTICE_AOE) == false
+                && weapon.ability().is(JUSTICE_STRIKE) == false)) {
             return false;
         }
         EgoAbilityDefinition ability = weapon.ability();
@@ -173,8 +177,10 @@ public final class EgoCombatListener implements Listener {
             return false;
         }
         long now = System.currentTimeMillis();
+        double attackSpeed = weapon.attributes().getOrDefault(org.bukkit.attribute.Attribute.ATTACK_SPEED, 4.0D);
+        long interval = Math.max(50L, (long) Math.ceil(1000.0D / Math.max(0.1D, attackSpeed)));
         long previous = lastJusticeSwingAt.getOrDefault(attacker.getUniqueId(), 0L);
-        if (now - previous < 120L) {
+        if (now - previous < interval) {
             return false;
         }
         lastJusticeSwingAt.put(attacker.getUniqueId(), now);
@@ -207,6 +213,20 @@ public final class EgoCombatListener implements Listener {
                 forwardRange,
                 verticalRange,
                 forwardRange);
+
+        if (ability.is(JUSTICE_STRIKE)) {
+            if (primaryTarget instanceof LivingEntity living && living != attacker) {
+                dealJusticeMultiHit(attacker, living, ability);
+                spawnBlueTrail(living.getLocation().add(0.0D, 1.0D, 0.0D), ability);
+            } else {
+                Entity target = attacker.getTargetEntity((int) Math.ceil(Math.max(1.0D, ability.range())), false);
+                if (target instanceof LivingEntity living && living != attacker) {
+                    dealJusticeMultiHit(attacker, living, ability);
+                    spawnBlueTrail(living.getLocation().add(0.0D, 1.0D, 0.0D), ability);
+                }
+            }
+            return;
+        }
 
         java.util.HashSet<UUID> hit = new java.util.HashSet<>();
         if (primaryTarget instanceof LivingEntity living && living != attacker) {
@@ -246,9 +266,11 @@ public final class EgoCombatListener implements Listener {
             double min = ability.minDamage();
             double max = ability.maxDamage();
             double damage = max <= min ? min : ThreadLocalRandom.current().nextDouble(min, max);
-            // PALE/蓝伤在 EgoDamageService 内按目标最大生命值百分比转换。
             target.setNoDamageTicks(0);
-            if (!plugin.egoDamage().dealDamage(attacker, target, damage, DamageChannel.BLUE)) {
+            boolean applied = ability.percentageDamage()
+                    ? plugin.egoDamage().dealDamage(attacker, target, damage, DamageChannel.BLUE)
+                    : plugin.egoDamage().dealFlatDamage(attacker, target, damage, DamageChannel.BLUE);
+            if (!applied) {
                 break;
             }
         }

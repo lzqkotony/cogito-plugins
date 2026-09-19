@@ -230,10 +230,9 @@ sets:
         display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
         lore:
           - "<gray>攻击通道：<blue>蓝伤"
-          - "<gray>攻速：<white>0.4"
-          - "<gray>满蓄力挥剑，对前方区域造成 <white>8~10</white> 段蓝伤"
-          - "<gray>每段为最大生命值的 <white>5~6%"
-          - "<dark_gray>范围：前方 6 格、左右各 1 格"
+          - "<gray>攻速：<white>4.0"
+          - "<gray>攻击目标：<white>6 格"
+          - "<gray>单次造成 <white>5~6</white> 点固定蓝伤"
           - "<aqua>特效：蓝色粒子"
         glint: true
         custom-model-data: 92105
@@ -243,18 +242,17 @@ sets:
         remove-vanilla-attributes: true
         attack-channel: BLUE
         attributes:
-          attack-speed: 0.4
+          attack-speed: 4.0
           attack-damage: 0.0
         ability:
-          type: justice-aoe
+          type: justice-strike
+          range: 6
           damage-min: 5
           damage-max: 6
-          hits-min: 8
-          hits-max: 10
-          forward: 6
-          side: 1
-          height: 3
-          require-full-charge: true
+          hits-min: 1
+          hits-max: 1
+          require-full-charge: false
+          percentage-damage: false
 
   # 彩蛋套装：不写进 README / Release Notes。
   server-owner:
@@ -267,7 +265,7 @@ sets:
 
     armor:
       helmet:
-        material: GOLDEN_HELMET
+        material: DIAMOND_HELMET
         display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
@@ -279,8 +277,11 @@ sets:
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: spire
+          material: gold
       chestplate:
-        material: GOLDEN_CHESTPLATE
+        material: DIAMOND_CHESTPLATE
         display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
@@ -292,8 +293,11 @@ sets:
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: spire
+          material: gold
       leggings:
-        material: GOLDEN_LEGGINGS
+        material: DIAMOND_LEGGINGS
         display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
@@ -305,8 +309,11 @@ sets:
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: spire
+          material: gold
       boots:
-        material: GOLDEN_BOOTS
+        material: DIAMOND_BOOTS
         display-name: "<gradient:#3b82f6:#facc15>服主</gradient>"
         lore:
           - "<gray>穿戴任意一件后，获得服主级保护"
@@ -318,6 +325,9 @@ sets:
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: spire
+          material: gold
 
     weapons:
       owner-blade:

@@ -44,6 +44,18 @@ public final class EgoDamageService {
         return true;
     }
 
+    /** 固定点数的蓝伤，不按最大生命值百分比换算。 */
+    public boolean dealFlatDamage(Player attacker, LivingEntity target, double amount, DamageChannel channel) {
+        if (attacker == null || target == null || channel == null || !isValidAmount(amount)) {
+            return false;
+        }
+        if (channel == DamageChannel.BLUE && !plugin.ego().canDealBlue(attacker)) {
+            return false;
+        }
+        target.damage(amount, attacker);
+        return true;
+    }
+
     private double resolveAmount(LivingEntity target, double amount, DamageChannel channel) {
         return channel == DamageChannel.BLUE
                 ? EgoMath.blueDamage(target.getMaxHealth(), amount)

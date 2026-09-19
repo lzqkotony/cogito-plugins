@@ -18,10 +18,11 @@ public record EgoAbilityDefinition(
         int sideBlocks,
         int heightBlocks,
         boolean requireFullCharge,
+        boolean percentageDamage,
         String message) {
 
     public static EgoAbilityDefinition none() {
-        return new EgoAbilityDefinition(null, 0.0D, 0.0D, 1, 1, 0.0D, 0, 0, 0, false, null);
+        return new EgoAbilityDefinition(null, 0.0D, 0.0D, 1, 1, 0.0D, 0, 0, 0, false, true, null);
     }
 
     public EgoAbilityDefinition {
@@ -55,6 +56,7 @@ public record EgoAbilityDefinition(
                 section.getInt("side", 0),
                 section.getInt("height", 0),
                 section.getBoolean("require-full-charge", false),
+                section.getBoolean("percentage-damage", true),
                 section.getString("message", ""));
     }
 
