@@ -89,10 +89,10 @@ public final class ParadiseLostService implements Listener {
     }
 
     /**
-     * 执行一次挥击。普通攻击只命中 16 格内锁定的目标；特殊攻击冷却完成后会优先
-     * 向前挥出黑色痕迹，即使没有直接锁定生物也能触发范围攻击。
+     * 执行一次挥击。普通攻击以玩家为中心的前后左右上下各 8 格为范围；特殊攻击
+     * 冷却完成后会优先向前挥出黑色痕迹，即使没有直接锁定生物也能触发范围攻击。
      */
-    public boolean tryAttack(Player player, Entity target) {
+    public boolean tryAttack(Player player, Entity ignoredTarget) {
         if (player == null || !player.isOnline() || player.isDead()) {
             return false;
         }
@@ -118,7 +118,7 @@ public final class ParadiseLostService implements Listener {
             return true;
         }
 
-        strikeCurrentChunk(player, weapon.ability());
+        strikeAroundPlayer(player, weapon.ability());
         lastAttackAt.put(player.getUniqueId(), now);
         player.setCooldown(player.getInventory().getItemInMainHand(), 40);
         return true;
@@ -211,13 +211,15 @@ public final class ParadiseLostService implements Listener {
         apostles.remove(event.getEntity().getUniqueId());
     }
 
-    /** 普通攻击以玩家所在区块为范围；空挥时也会执行范围查询。 */
-    private void strikeCurrentChunk(Player player, EgoAbilityDefinition ability) {
+    /** 普通攻击以玩家为中心的前后左右上下各 8 格为范围；空挥时也会执行范围查询。 */
+    private void strikeAroundPlayer(Player player, EgoAbilityDefinition ability) {
         int hits = 0;
-        for (Entity entity : player.getChunk().getEntities()) {
+        Location center = player.getLocation().add(0.0D, 1.0D, 0.0D);
+        for (Entity entity : player.getWorld().getNearbyEntities(center, 8.0D, 8.0D, 8.0D)) {
             if (!(entity instanceof LivingEntity living)
                     || living == player
                     || living instanceof ArmorStand
+                    || isApostle(living)
                     || living.isDead()
                     || !living.isValid()) {
                 continue;
@@ -256,6 +258,7 @@ public final class ParadiseLostService implements Listener {
                 forwardRange)) {
             if (!(entity instanceof LivingEntity living)
                     || living == player
+                    || isApostle(living)
                     || living.isDead()
                     || !living.isValid()) {
                 continue;
@@ -488,6 +491,16 @@ public final class ParadiseLostService implements Listener {
         return candidates.stream()
                 .min(Comparator.comparingDouble(value -> value.getLocation().distanceSquared(skeleton.getLocation())))
                 .orElse(null);
+    }
+
+    /** 失乐园召唤物既不是武器的攻击目标，也不能把召唤者当作敌人。 */
+    public boolean isApostle(Entity entity) {
+        return entity != null && apostles.containsKey(entity.getUniqueId());
+    }
+
+    public boolean isOwnerOf(Entity apostle, Entity target) {
+        ApostleState state = apostle == null ? null : apostles.get(apostle.getUniqueId());
+        return state != null && target != null && state.ownerId.equals(target.getUniqueId());
     }
 
     private void dashToTarget(Skeleton skeleton, LivingEntity target) {

@@ -29,6 +29,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -64,6 +65,12 @@ public final class EgoCombatListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof LivingEntity apostle
+                && paradiseLost.isApostle(apostle)
+                && paradiseLost.isOwnerOf(apostle, event.getEntity())) {
+            event.setCancelled(true);
+            return;
+        }
         if (abilityDepth.get() == 0 && event.getDamager() instanceof Player attacker) {
             CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
             if (weapon != null && paradiseLost.isWeapon(weapon)) {
@@ -89,7 +96,7 @@ public final class EgoCombatListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = false)
     public void onInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) {
             return;
@@ -103,6 +110,8 @@ public final class EgoCombatListener implements Listener {
             if (event.getAction() == Action.RIGHT_CLICK_AIR
                     || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 event.setCancelled(true);
+                event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+                event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
                 paradiseLost.trySummon(player);
             } else if (event.getAction() == Action.LEFT_CLICK_AIR) {
                 event.setCancelled(true);
@@ -213,6 +222,14 @@ public final class EgoCombatListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onEntityDeath(EntityDeathEvent event) {
         paradiseLost.onApostleDeath(event);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onApostleTarget(EntityTargetLivingEntityEvent event) {
+        if (paradiseLost.isApostle(event.getEntity())
+                && paradiseLost.isOwnerOf(event.getEntity(), event.getTarget())) {
+            event.setCancelled(true);
+        }
     }
 
     public void shutdown() {
