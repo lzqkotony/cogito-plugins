@@ -32,6 +32,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 /** E.G.O. 武器技能与「正义裁决者」整套被动；0.5.2 起蓝伤按最大生命值百分比结算。 */
@@ -39,6 +40,7 @@ public final class EgoCombatListener implements Listener {
 
     private static final String JUSTICE_AOE = "justice-aoe";
     private static final String JUSTICE_STRIKE = "justice-strike";
+    private static final String JUSTICE_SOUL = "justice-soul";
     private static final String SERVER_OWNER = "server-owner";
     private static final String JUDGEMENT = "judgement";
     private static final double JUDGEMENT_DAMAGE = 15.0D;
@@ -56,7 +58,7 @@ public final class EgoCombatListener implements Listener {
     public void onDamage(EntityDamageByEntityEvent event) {
         if (abilityDepth.get() == 0 && event.getDamager() instanceof Player attacker) {
             CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
-            if (weapon != null && (weapon.ability().is(JUSTICE_AOE) || weapon.ability().is(JUSTICE_STRIKE))) {
+            if (weapon != null && isJusticeAbility(weapon.ability())) {
                 event.setCancelled(true);
                 tryJusticeSwing(attacker, event.getEntity());
                 return;
@@ -122,7 +124,7 @@ public final class EgoCombatListener implements Listener {
         if (weapon == null) {
             return;
         }
-        if (weapon.ability().is(JUSTICE_AOE) || weapon.ability().is(JUSTICE_STRIKE)) {
+        if (isJusticeAbility(weapon.ability())) {
             Entity target = player.getTargetEntity(
                     (int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false);
             tryJusticeSwing(player, target);
@@ -168,30 +170,50 @@ public final class EgoCombatListener implements Listener {
 
     private boolean tryJusticeSwing(Player attacker, Entity primaryTarget) {
         CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
-        if (weapon == null || (weapon.ability().is(JUSTICE_AOE) == false
-                && weapon.ability().is(JUSTICE_STRIKE) == false)) {
+        if (weapon == null || !isJusticeAbility(weapon.ability())) {
             return false;
         }
         EgoAbilityDefinition ability = weapon.ability();
         if (ability.requireFullCharge() && attacker.getAttackCooldown() < 0.90F) {
             return false;
         }
+        ItemStack held = attacker.getInventory().getItemInMainHand();
+        if (ability.is(JUSTICE_SOUL)) {
+            if (attacker.hasCooldown(held)) {
+                return false;
+            }
+        }
         long now = System.currentTimeMillis();
         double attackSpeed = weapon.attributes().getOrDefault(org.bukkit.attribute.Attribute.ATTACK_SPEED, 4.0D);
-        long interval = Math.max(50L, (long) Math.ceil(1000.0D / Math.max(0.1D, attackSpeed)));
+        long interval = ability.is(JUSTICE_SOUL)
+                ? 40L * 50L
+                : Math.max(50L, (long) Math.ceil(1000.0D / Math.max(0.1D, attackSpeed)));
         long previous = lastJusticeSwingAt.getOrDefault(attacker.getUniqueId(), 0L);
         if (now - previous < interval) {
             return false;
         }
         lastJusticeSwingAt.put(attacker.getUniqueId(), now);
         withSuppressedAbilities(() -> handleJusticeAttack(attacker, primaryTarget));
-        attacker.resetCooldown();
+        if (ability.is(JUSTICE_SOUL)) {
+            attacker.setCooldown(held, 40);
+        } else {
+            attacker.resetCooldown();
+        }
         return true;
     }
 
     private void handleJusticeAttack(Player attacker, Entity primaryTarget) {
         EgoAbilityDefinition ability = plugin.items()
                 .identify(attacker.getInventory().getItemInMainHand()).ability();
+        if (ability.is(JUSTICE_SOUL)) {
+            LivingEntity target = primaryTarget instanceof LivingEntity living && living != attacker
+                    ? living
+                    : targetInFront(attacker, ability.range());
+            if (target != null) {
+                dealJusticeSoulAttack(attacker, target, ability);
+            }
+            return;
+        }
 
         Location eye = attacker.getEyeLocation();
         Vector forward = eye.getDirection().setY(0.0D);
@@ -254,6 +276,44 @@ public final class EgoCombatListener implements Listener {
         }
 
         spawnBlueTrail(origin.clone().add(forward.clone().multiply(2.0D)), ability);
+    }
+
+    private LivingEntity targetInFront(Player attacker, double range) {
+        Entity target = attacker.getTargetEntity((int) Math.ceil(Math.max(1.0D, range)), false);
+        return target instanceof LivingEntity living && living != attacker ? living : null;
+    }
+
+    private void dealJusticeSoulAttack(Player attacker, LivingEntity target, EgoAbilityDefinition ability) {
+        boolean special = ability.specialChance() > 0.0D
+                && ThreadLocalRandom.current().nextDouble() < ability.specialChance();
+        if (special) {
+            for (int i = 0; i < ability.specialHeavyHits(); i++) {
+                applyFlatHit(attacker, target, ability.specialHeavyMinDamage(), ability.specialHeavyMaxDamage());
+            }
+            for (int i = 0; i < ability.specialLightHits(); i++) {
+                applyFlatHit(attacker, target, ability.specialLightMinDamage(), ability.specialLightMaxDamage());
+            }
+        } else {
+            for (int i = 0; i < ability.minHits(); i++) {
+                applyFlatHit(attacker, target, ability.minDamage(), ability.maxDamage());
+            }
+        }
+        spawnBlueTrail(target.getLocation().add(0.0D, 1.0D, 0.0D), ability);
+    }
+
+    private void applyFlatHit(Player attacker, LivingEntity target, double min, double max) {
+        if (!target.isValid() || target.isDead()) {
+            return;
+        }
+        double damage = max <= min ? min : ThreadLocalRandom.current().nextDouble(min, max);
+        target.setNoDamageTicks(0);
+        plugin.egoDamage().dealFlatDamage(attacker, target, damage, DamageChannel.BLUE);
+    }
+
+    private boolean isJusticeAbility(EgoAbilityDefinition ability) {
+        return ability != null && (ability.is(JUSTICE_AOE)
+                || ability.is(JUSTICE_STRIKE)
+                || ability.is(JUSTICE_SOUL));
     }
 
     private void dealJusticeMultiHit(Player attacker, LivingEntity target, EgoAbilityDefinition ability) {
