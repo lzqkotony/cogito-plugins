@@ -13,18 +13,44 @@ public record EgoSetBonus(
         double maxHealthPerPiece,
         NavigableMap<Integer, Double> attackSpeedByPieces,
         NavigableMap<Integer, Double> attackDamageByPieces,
+        NavigableMap<Integer, Integer> regenerationLevelByPieces,
+        NavigableMap<Integer, Integer> resistanceLevelByPieces,
+        NavigableMap<Integer, Integer> fireResistanceLevelByPieces,
+        NavigableMap<Integer, Integer> waterBreathingLevelByPieces,
         String skill,
-        int skillCooldownSeconds) {
+        int skillCooldownSeconds,
+        double skillChargePerActivation,
+        double skillMaxCharge,
+        double damageImmunityThreshold) {
 
     public static EgoSetBonus none() {
-        return new EgoSetBonus(0.0D, new TreeMap<>(), new TreeMap<>(), null, 0);
+        return new EgoSetBonus(
+                0.0D,
+                new TreeMap<>(),
+                new TreeMap<>(),
+                new TreeMap<>(),
+                new TreeMap<>(),
+                new TreeMap<>(),
+                new TreeMap<>(),
+                null,
+                0,
+                0.0D,
+                0.0D,
+                0.0D);
     }
 
     public EgoSetBonus {
         attackSpeedByPieces = orderedCopy(attackSpeedByPieces);
         attackDamageByPieces = orderedCopy(attackDamageByPieces);
+        regenerationLevelByPieces = orderedLevelCopy(regenerationLevelByPieces);
+        resistanceLevelByPieces = orderedLevelCopy(resistanceLevelByPieces);
+        fireResistanceLevelByPieces = orderedLevelCopy(fireResistanceLevelByPieces);
+        waterBreathingLevelByPieces = orderedLevelCopy(waterBreathingLevelByPieces);
         skill = skill == null || skill.isBlank() ? null : skill.toLowerCase(java.util.Locale.ROOT);
         skillCooldownSeconds = Math.max(0, skillCooldownSeconds);
+        skillChargePerActivation = Math.max(0.0D, skillChargePerActivation);
+        skillMaxCharge = Math.max(0.0D, skillMaxCharge);
+        damageImmunityThreshold = Math.max(0.0D, damageImmunityThreshold);
     }
 
     public double maxHealth(int pieces) {
@@ -37,6 +63,26 @@ public record EgoSetBonus(
 
     public double attackDamage(int pieces) {
         return sumAtMost(attackDamageByPieces, pieces);
+    }
+
+    public int regenerationLevel(int pieces) {
+        return levelAtMost(regenerationLevelByPieces, pieces);
+    }
+
+    public int resistanceLevel(int pieces) {
+        return levelAtMost(resistanceLevelByPieces, pieces);
+    }
+
+    public int fireResistanceLevel(int pieces) {
+        return levelAtMost(fireResistanceLevelByPieces, pieces);
+    }
+
+    public int waterBreathingLevel(int pieces) {
+        return levelAtMost(waterBreathingLevelByPieces, pieces);
+    }
+
+    public boolean blocksDamage(double damage, int pieces) {
+        return pieces >= 4 && damageImmunityThreshold > 0.0D && damage <= damageImmunityThreshold;
     }
 
     public boolean hasSkill(String id, int pieces) {
@@ -54,6 +100,17 @@ public record EgoSetBonus(
         return total;
     }
 
+    private static int levelAtMost(NavigableMap<Integer, Integer> values, int pieces) {
+        int level = 0;
+        for (Map.Entry<Integer, Integer> entry : values.entrySet()) {
+            if (entry.getKey() > pieces) {
+                break;
+            }
+            level = Math.max(level, entry.getValue());
+        }
+        return level;
+    }
+
     private static NavigableMap<Integer, Double> orderedCopy(Map<Integer, Double> source) {
         if (source == null || source.isEmpty()) {
             return Collections.emptyNavigableMap();
@@ -61,6 +118,19 @@ public record EgoSetBonus(
         TreeMap<Integer, Double> copy = new TreeMap<>();
         source.forEach((pieces, value) -> {
             if (pieces != null && pieces > 0 && value != null && Double.isFinite(value)) {
+                copy.put(pieces, value);
+            }
+        });
+        return Collections.unmodifiableNavigableMap(copy);
+    }
+
+    private static NavigableMap<Integer, Integer> orderedLevelCopy(Map<Integer, Integer> source) {
+        if (source == null || source.isEmpty()) {
+            return Collections.emptyNavigableMap();
+        }
+        TreeMap<Integer, Integer> copy = new TreeMap<>();
+        source.forEach((pieces, value) -> {
+            if (pieces != null && pieces > 0 && value != null && value > 0) {
                 copy.put(pieces, value);
             }
         });

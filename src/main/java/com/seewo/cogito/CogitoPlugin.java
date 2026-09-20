@@ -54,6 +54,7 @@ public final class CogitoPlugin extends JavaPlugin {
     private EgoSetBonusService egoSetBonusService;
     private EgoDevelopmentService egoDevelopmentService;
     private DevelopTableManager developTableManager;
+    private EgoCombatListener egoCombatListener;
     private PlayerDataService dataService;
     private VaultHook vaultHook;
 
@@ -93,7 +94,8 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new ItemBehaviourListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoDamageListener(this), this);
-        getServer().getPluginManager().registerEvents(new EgoCombatListener(this), this);
+        this.egoCombatListener = new EgoCombatListener(this);
+        getServer().getPluginManager().registerEvents(egoCombatListener, this);
         getServer().getPluginManager().registerEvents(new ServerOwnerProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoEnchantListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
@@ -114,6 +116,9 @@ public final class CogitoPlugin extends JavaPlugin {
     public void onDisable() {
         if (egoSetBonusService != null) {
             egoSetBonusService.stop();
+        }
+        if (egoCombatListener != null) {
+            egoCombatListener.shutdown();
         }
         if (dataService != null) {
             dataService.shutdown();

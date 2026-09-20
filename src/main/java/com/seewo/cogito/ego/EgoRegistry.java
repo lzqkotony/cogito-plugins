@@ -146,8 +146,15 @@ public final class EgoRegistry {
                 section.getDouble("max-health-per-piece", 0.0D),
                 readThresholds(section.getConfigurationSection("attack-speed")),
                 readThresholds(section.getConfigurationSection("attack-damage")),
+                readLevels(section.getConfigurationSection("regeneration-level")),
+                readLevels(section.getConfigurationSection("resistance-level")),
+                readLevels(section.getConfigurationSection("fire-resistance-level")),
+                readLevels(section.getConfigurationSection("water-breathing-level")),
                 section.getString("skill", ""),
-                section.getInt("skill-cooldown-seconds", 0));
+                section.getInt("skill-cooldown-seconds", 0),
+                section.getDouble("skill-charge-per-activation", 0.0D),
+                section.getDouble("skill-max-charge", 0.0D),
+                section.getDouble("damage-immunity-threshold", 0.0D));
     }
 
     private NavigableMap<Integer, Double> readThresholds(ConfigurationSection section) {
@@ -164,6 +171,25 @@ public final class EgoRegistry {
                 }
             } catch (NumberFormatException ignored) {
                 plugin.getLogger().warning("ego.yml: set-bonuses 的件数键无效：" + key);
+            }
+        }
+        return result;
+    }
+
+    private NavigableMap<Integer, Integer> readLevels(ConfigurationSection section) {
+        NavigableMap<Integer, Integer> result = new TreeMap<>();
+        if (section == null) {
+            return result;
+        }
+        for (String key : section.getKeys(false)) {
+            try {
+                int pieces = Integer.parseInt(key);
+                int value = section.getInt(key);
+                if (pieces > 0 && pieces <= 4 && value > 0) {
+                    result.put(pieces, value);
+                }
+            } catch (NumberFormatException ignored) {
+                plugin.getLogger().warning("ego.yml: set-bonuses 的等级键无效：" + key);
             }
         }
         return result;

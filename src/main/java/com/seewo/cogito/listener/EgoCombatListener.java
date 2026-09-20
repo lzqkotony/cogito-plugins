@@ -28,6 +28,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
@@ -50,6 +51,7 @@ public final class EgoCombatListener implements Listener {
     private static final double JUDGEMENT_DAMAGE = 15.0D;
 
     private final CogitoPlugin plugin;
+    private final ParadiseLostService paradiseLost;
     private final Map<UUID, Long> judgementReadyAt = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastJusticeSwingAt = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> soulTasks = new ConcurrentHashMap<>();
@@ -57,12 +59,18 @@ public final class EgoCombatListener implements Listener {
 
     public EgoCombatListener(CogitoPlugin plugin) {
         this.plugin = plugin;
+        this.paradiseLost = new ParadiseLostService(plugin);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (abilityDepth.get() == 0 && event.getDamager() instanceof Player attacker) {
             CustomItem weapon = plugin.items().identify(attacker.getInventory().getItemInMainHand());
+            if (weapon != null && paradiseLost.isWeapon(weapon)) {
+                event.setCancelled(true);
+                withSuppressedAbilities(() -> paradiseLost.tryAttack(attacker, event.getEntity()));
+                return;
+            }
             if (weapon != null && isJusticeAbility(weapon.ability())) {
                 event.setCancelled(true);
                 tryJusticeSwing(attacker, event.getEntity());
@@ -88,7 +96,18 @@ public final class EgoCombatListener implements Listener {
         }
         Player player = event.getPlayer();
         CustomItem weapon = plugin.items().identify(player.getInventory().getItemInMainHand());
-        if (weapon == null || !weapon.ability().is(SERVER_OWNER)) {
+        if (weapon == null) {
+            return;
+        }
+        if (paradiseLost.isWeapon(weapon)) {
+            if (event.getAction() == Action.RIGHT_CLICK_AIR
+                    || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                event.setCancelled(true);
+                paradiseLost.trySummon(player);
+            }
+            return;
+        }
+        if (!weapon.ability().is(SERVER_OWNER)) {
             return;
         }
 
@@ -127,6 +146,12 @@ public final class EgoCombatListener implements Listener {
         Player player = event.getPlayer();
         CustomItem weapon = plugin.items().identify(player.getInventory().getItemInMainHand());
         if (weapon == null) {
+            return;
+        }
+        if (paradiseLost.isWeapon(weapon)) {
+            Entity target = player.getTargetEntity(
+                    (int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false);
+            withSuppressedAbilities(() -> paradiseLost.tryAttack(player, target));
             return;
         }
         if (isJusticeAbility(weapon.ability())) {
@@ -172,6 +197,20 @@ public final class EgoCombatListener implements Listener {
         judgementReadyAt.remove(event.getPlayer().getUniqueId());
         lastJusticeSwingAt.remove(event.getPlayer().getUniqueId());
         cancelSoulTask(event.getPlayer());
+        paradiseLost.cleanupPlayer(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onEntityDeath(EntityDeathEvent event) {
+        paradiseLost.onApostleDeath(event);
+    }
+
+    public void shutdown() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            cancelSoulTask(player);
+        }
+        soulTasks.clear();
+        paradiseLost.shutdown();
     }
 
     private boolean tryJusticeSwing(Player attacker, Entity primaryTarget) {

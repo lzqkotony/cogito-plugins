@@ -6,7 +6,9 @@ package com.seewo.cogito.ego;
 import com.seewo.cogito.CogitoPlugin;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
@@ -16,10 +18,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
 /** 把 ego.yml 的套装属性按当前防具件数 y 动态同步到玩家。 */
 public final class EgoSetBonusService {
+
+    private static final String HOLY = "holy";
+    private static final int EFFECT_REFRESH_TICKS = 60;
 
     private static final EquipmentSlot[] ARMOR_SLOTS = {
             EquipmentSlot.HEAD,
@@ -32,6 +39,7 @@ public final class EgoSetBonusService {
     private final NamespacedKey maxHealthKey;
     private final NamespacedKey attackSpeedKey;
     private final NamespacedKey attackDamageKey;
+    private final Map<UUID, HolyShieldState> holyShields = new HashMap<>();
     private BukkitTask task;
 
     public EgoSetBonusService(CogitoPlugin plugin) {
@@ -57,7 +65,9 @@ public final class EgoSetBonusService {
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
             removeModifiers(player);
+            clearHolyShield(player.getUniqueId());
         }
+        holyShields.clear();
     }
 
     /** 立即刷新一个玩家，装备变化或上线时可直接调用。 */
@@ -71,6 +81,7 @@ public final class EgoSetBonusService {
         EgoSetDefinition definition = equipped.active() ? plugin.ego().set(equipped.setId()) : null;
         if (definition == null) {
             removeModifiers(player);
+            clearHolyShield(player.getUniqueId());
             return;
         }
 
@@ -78,12 +89,131 @@ public final class EgoSetBonusService {
         apply(player, Attribute.MAX_HEALTH, maxHealthKey, bonus.maxHealth(equipped.pieces()));
         apply(player, Attribute.ATTACK_SPEED, attackSpeedKey, bonus.attackSpeed(equipped.pieces()));
         apply(player, Attribute.ATTACK_DAMAGE, attackDamageKey, bonus.attackDamage(equipped.pieces()));
+        applyPotion(player, PotionEffectType.REGENERATION, bonus.regenerationLevel(equipped.pieces()));
+        applyPotion(player, PotionEffectType.RESISTANCE, bonus.resistanceLevel(equipped.pieces()));
+        applyPotion(player, PotionEffectType.FIRE_RESISTANCE, bonus.fireResistanceLevel(equipped.pieces()));
+        applyPotion(player, PotionEffectType.WATER_BREATHING, bonus.waterBreathingLevel(equipped.pieces()));
+        reconcileHolyShield(player, definition.id(), bonus, equipped.pieces());
     }
 
     public void removeModifiers(Player player) {
         remove(player, Attribute.MAX_HEALTH, maxHealthKey);
         remove(player, Attribute.ATTACK_SPEED, attackSpeedKey);
         remove(player, Attribute.ATTACK_DAMAGE, attackDamageKey);
+    }
+
+    /** 结算一次神圣黄盾。伤害超过剩余盾量时盾会破碎，但本次伤害不会穿透。 */
+    public HolyShieldResult absorbWithHolyShield(Player player, double damage) {
+        if (player == null || !Double.isFinite(damage) || damage <= 0.0D) {
+            return HolyShieldResult.NONE;
+        }
+        HolyShieldState state = holyShields.get(player.getUniqueId());
+        if (state == null || state.amount <= 0.0D) {
+            return HolyShieldResult.NONE;
+        }
+        HolyShieldResult result;
+        if (damage <= state.amount) {
+            state.amount = Math.max(0.0D, state.amount - damage);
+            result = HolyShieldResult.ABSORBED;
+        } else {
+            state.amount = 0.0D;
+            result = HolyShieldResult.BROKEN;
+        }
+        renderShield(player, state.amount);
+        return result;
+    }
+
+    public double holyShield(Player player) {
+        HolyShieldState state = player == null ? null : holyShields.get(player.getUniqueId());
+        return state == null ? 0.0D : state.amount;
+    }
+
+    private void reconcileHolyShield(
+            Player player,
+            String setId,
+            EgoSetBonus bonus,
+            int pieces) {
+        UUID playerId = player.getUniqueId();
+        if (!bonus.hasSkill(HOLY, pieces) || bonus.skillMaxCharge() <= 0.0D) {
+            clearHolyShield(playerId);
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        HolyShieldState state = holyShields.get(playerId);
+        if (state == null || !setId.equals(state.setId)) {
+            state = new HolyShieldState(setId, 0.0D, now + shieldIntervalMillis(bonus), now);
+            holyShields.put(playerId, state);
+        } else if (now - state.lastSeenAt > 3000L) {
+            state.nextChargeAt = now + shieldIntervalMillis(bonus);
+        }
+        state.lastSeenAt = now;
+
+        long interval = shieldIntervalMillis(bonus);
+        if (interval > 0L) {
+            int guard = 0;
+            while (now >= state.nextChargeAt
+                    && state.amount < bonus.skillMaxCharge()
+                    && guard++ < 128) {
+                state.amount = Math.min(
+                        bonus.skillMaxCharge(),
+                        state.amount + bonus.skillChargePerActivation());
+                state.nextChargeAt += interval;
+            }
+            if (state.amount >= bonus.skillMaxCharge() && now >= state.nextChargeAt) {
+                state.nextChargeAt = now + interval;
+            }
+        }
+        renderShield(player, state.amount);
+    }
+
+    private long shieldIntervalMillis(EgoSetBonus bonus) {
+        return Math.max(1, bonus.skillCooldownSeconds()) * 1000L;
+    }
+
+    private void renderShield(Player player, double amount) {
+        player.removePotionEffect(PotionEffectType.ABSORPTION);
+        if (amount <= 0.0D) {
+            return;
+        }
+        int amplifier = Math.max(0, (int) Math.ceil(amount / 4.0D) - 1);
+        player.addPotionEffect(new PotionEffect(
+                PotionEffectType.ABSORPTION,
+                EFFECT_REFRESH_TICKS,
+                amplifier,
+                false,
+                false,
+                false));
+    }
+
+    private void clearHolyShield(UUID playerId) {
+        if (holyShields.remove(playerId) == null) {
+            return;
+        }
+        Player player = Bukkit.getPlayer(playerId);
+        if (player != null && player.isOnline()) {
+            player.removePotionEffect(PotionEffectType.ABSORPTION);
+        }
+    }
+
+    private void applyPotion(Player player, PotionEffectType type, int level) {
+        if (level <= 0) {
+            return;
+        }
+        int amplifier = level - 1;
+        PotionEffect current = player.getPotionEffect(type);
+        if (current != null
+                && current.getAmplifier() >= amplifier
+                && current.getDuration() > EFFECT_REFRESH_TICKS / 2) {
+            return;
+        }
+        player.addPotionEffect(new PotionEffect(
+                type,
+                EFFECT_REFRESH_TICKS,
+                amplifier,
+                false,
+                false,
+                false));
     }
 
     private void enforceOpOnly(Player player) {
@@ -123,6 +253,26 @@ public final class EgoSetBonusService {
         AttributeInstance instance = player.getAttribute(attribute);
         if (instance != null) {
             instance.removeModifier(key);
+        }
+    }
+
+    public enum HolyShieldResult {
+        NONE,
+        ABSORBED,
+        BROKEN
+    }
+
+    private static final class HolyShieldState {
+        private final String setId;
+        private double amount;
+        private long nextChargeAt;
+        private long lastSeenAt;
+
+        private HolyShieldState(String setId, double amount, long nextChargeAt, long lastSeenAt) {
+            this.setId = setId;
+            this.amount = amount;
+            this.nextChargeAt = nextChargeAt;
+            this.lastSeenAt = lastSeenAt;
         }
     }
 }

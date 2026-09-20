@@ -37,6 +37,7 @@ AI 负责实现和验证——也就是所谓 **vibe coding**。
 - **玩家数据层（core data）**：SQLite 存档（等级、各异想体镇压次数、已解锁 E.G.O），上线读档 / 退服存档 / 定时异步落库
 - **E.G.O. 开发台与一次性蓝图**：蓝图装载后绑定玩家并消耗；护甲与武器分开研发，支持普通 / 进阶 / 高级 / 完全四档费用与成功率；开发台方块爆炸抗性同黑曜石、需钻石镐以上才能破坏
 - **套装能力与武器技能**：支持按防具件数 `y` 生效的最大生命、攻速、攻击力等套装属性和被动技能；`正义裁决者` 会在满蓄力挥剑时自动发动前方范围攻击
+- **失乐园 E.G.O.**：铁甲 + 红石 `wayfinder` 纹饰，按件数提供生命恢复、抗性提升、抗火与水下呼吸；四件套免疫实际伤害 `≤5`，并以每 `10s` 增长的原版吸收盾外观提供最高 `20` 点“神圣”黄盾。铁锄武器支持 16 格攻击、命中回血与减速，每 20 秒发动黑色痕迹特殊横扫，右键消耗 25% 最大生命召唤 12 位铁甲铁矛使徒
 - **PALE / 蓝伤百分比**：蓝伤按 Project Moon 规则折算为目标最大生命值的百分比；`5` 点蓝伤表示 `5%` 最大生命值，最终仍经过 E.G.O. 抗性结算
 - **箱子 GUI**：`/cogito gui` 打开箱子样式的菜单，看持有量 / 余额，点按钮直接兑换（物品锁死，拿不走）
 - **准确的背包统计**：识别只看 NBT 标签，玩家改名、附魔、堆叠都不会失效，也无法伪造
@@ -191,7 +192,7 @@ r = 1 - (1 - x) * y / 4
 需要 JDK 21 与 Maven：
 
 ```bash
-mvn clean package                       # 产物：target/Cogito-0.5.8.jar
+mvn clean package                       # 产物：target/Cogito-0.5.9.jar
 bash build.sh                           # 同上，Linux / macOS / WSL 友好
 bash build.sh -d /opt/paper/plugins     # 构建后直接拷贝到服务端 plugins 目录
 ```
@@ -212,7 +213,8 @@ src/main/java/com/seewo/cogito/
 ├── command/CogitoCommand.java      # /cogito（gui / give / debug / 数据管理 / reload）
 ├── gui/Menu.java  gui/MenuListener.java  gui/EnkephalinMenu.java   # 箱子界面
 ├── listener/ItemBehaviourListener.java  # 拦截放置、合成与 Cogito 饮用
-├── listener/EgoDamageListener.java      # 应用 E.G.O. 统一抗性
+├── listener/EgoDamageListener.java      # E.G.O. 统一抗性、≤5 免伤与神圣黄盾
+├── listener/ParadiseLostService.java    # 失乐园武器、特殊横扫与 12 使徒召唤
 ├── listener/EgoEnchantListener.java     # 阻止 E.G.O. 附魔
 ├── listener/PlayerJoinListener.java
 └── text/Messages.java              # MiniMessage 文本出口
@@ -236,8 +238,9 @@ src/main/java/com/seewo/cogito/
 | v0.5.5 | 金枝改为枯木底材 + `item_model` 自定义模型，接入 Java/Bedrock 双端资源包和 GitHub 代理下载 | ✅ 已发布 0.5.5 |
 | v0.5.6 | 正义裁决者灵魂攻击机制：5 段普通、40% 特殊攻击、4 格距离、40 tick 硬冷却 | ✅ 已发布 0.5.6 |
 | v0.5.7 | 灵魂攻击改为 2 秒时间轴多段结算，范围改为前方 4 / 宽 1 / 高 4 | ✅ 已发布 0.5.7 |
-| v0.5.8 | 负抗性改为伤害反转治疗：服主 `x=-10` 可免疫并回血 | ✅ 本版 |
-| v0.5.x | 同一功能线的修复与小功能：E.G.O. 使用代价、共鸣、饰品四部位…… | 🚧 下一个 0.5.9 起 |
+| v0.5.8 | 负抗性改为伤害反转治疗：服主 `x=-10` 可免疫并回血 | ✅ 已发布 0.5.8 |
+| v0.5.9 | 失乐园套装、神圣黄盾、铁锄武器、20 秒特殊横扫与 12 使徒召唤 | ✅ 本版 |
+| v0.5.x | 同一功能线的修复与小功能：E.G.O. 使用代价、共鸣、饰品四部位…… | 🚧 下一个 0.5.10 起 |
 | v0.6 | 异想体定义与镇压产出（ALEPH 100~60 / WAW 60~30 / HE 30~20 / TETH 20~10 / ZAYIN 10~8） | 📋 计划中 |
 | v0.7 | 随机 E.G.O. 开发（抽卡与卡池）、提取探索 | 📋 计划中 |
 

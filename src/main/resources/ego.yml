@@ -22,76 +22,147 @@ enabled: true
 
 sets:
   paradise-lost:
-    display-name: "<gradient:#facc15:#a855f7>失乐园</gradient>"
+    display-name: "<gradient:#ffffff:#cbd5e1>失乐园</gradient>"
     armor-resistance: 0.1
     aliases: [paradise, 失乐园]
 
     develop:
       armor:
-        cost: 64
-      weapon:
-        cost: 64
+        cost: 800
       blueprint:
         material: PAPER
         glint: true
 
+    set-bonuses:
+      max-health-per-piece: 10
+      regeneration-level:
+        "1": 1
+        "4": 2
+      resistance-level:
+        "2": 1
+        "4": 2
+      fire-resistance-level:
+        "3": 1
+      water-breathing-level:
+        "4": 1
+      skill: holy
+      skill-cooldown-seconds: 10
+      skill-charge-per-activation: 1
+      skill-max-charge: 20
+      damage-immunity-threshold: 5
+
     armor:
       helmet:
-        material: NETHERITE_HELMET
-        display-name: "<gradient:#facc15:#a855f7>失乐园头饰</gradient>"
+        material: IRON_HELMET
+        display-name: "<gradient:#ffffff:#cbd5e1>失乐园</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
-          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+          - "<gray>y=1：+10 最大生命 / 生命恢复 I"
+          - "<gray>y=2：+20 最大生命 / 抗性提升 I"
+          - "<gray>y=3：+30 最大生命 / 抗火 I"
+          - "<gray>y=4：+40 最大生命 / 水下呼吸 I / 神圣"
+          - "<gray>y=4：免疫单次 5 点及以下的伤害"
+          - "<dark_gray><italic>你不必担心，我已经听到了你那略带惊恐的祈祷。"
+          - "<dark_gray><italic>如今，你还没有意识到，痛苦这种事物再微小不过了吗？"
+          - "<dark_gray><italic>你需要向我证明你的出人之处。"
+          - "<dark_gray><italic>你应该信任我，将生命奉献给我。然后，我自然会向你展示，什么叫做力量。"
         glint: true
         custom-model-data: 92001
         stackable: false
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: wayfinder
+          material: redstone
       chestplate:
-        material: NETHERITE_CHESTPLATE
-        display-name: "<gradient:#facc15:#a855f7>失乐园胸甲</gradient>"
+        material: IRON_CHESTPLATE
+        display-name: "<gradient:#ffffff:#cbd5e1>失乐园</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
-          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+          - "<gray>y=1：+10 最大生命 / 生命恢复 I"
+          - "<gray>y=2：+20 最大生命 / 抗性提升 I"
+          - "<gray>y=3：+30 最大生命 / 抗火 I"
+          - "<gray>y=4：+40 最大生命 / 水下呼吸 I / 神圣"
+          - "<gray>y=4：免疫单次 5 点及以下的伤害"
+          - "<dark_gray><italic>你不必担心，我已经听到了你那略带惊恐的祈祷。"
+          - "<dark_gray><italic>如今，你还没有意识到，痛苦这种事物再微小不过了吗？"
+          - "<dark_gray><italic>你需要向我证明你的出人之处。"
+          - "<dark_gray><italic>你应该信任我，将生命奉献给我。然后，我自然会向你展示，什么叫做力量。"
         glint: true
         custom-model-data: 92002
         stackable: false
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: wayfinder
+          material: redstone
       leggings:
-        material: NETHERITE_LEGGINGS
-        display-name: "<gradient:#facc15:#a855f7>失乐园护腿</gradient>"
+        material: IRON_LEGGINGS
+        display-name: "<gradient:#ffffff:#cbd5e1>失乐园</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
-          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+          - "<gray>y=1：+10 最大生命 / 生命恢复 I"
+          - "<gray>y=2：+20 最大生命 / 抗性提升 I"
+          - "<gray>y=3：+30 最大生命 / 抗火 I"
+          - "<gray>y=4：+40 最大生命 / 水下呼吸 I / 神圣"
+          - "<gray>y=4：免疫单次 5 点及以下的伤害"
+          - "<dark_gray><italic>你不必担心，我已经听到了你那略带惊恐的祈祷。"
+          - "<dark_gray><italic>如今，你还没有意识到，痛苦这种事物再微小不过了吗？"
+          - "<dark_gray><italic>你需要向我证明你的出人之处。"
+          - "<dark_gray><italic>你应该信任我，将生命奉献给我。然后，我自然会向你展示，什么叫做力量。"
         glint: true
         custom-model-data: 92003
         stackable: false
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: wayfinder
+          material: redstone
       boots:
-        material: NETHERITE_BOOTS
-        display-name: "<gradient:#facc15:#a855f7>失乐园战靴</gradient>"
+        material: IRON_BOOTS
+        display-name: "<gradient:#ffffff:#cbd5e1>失乐园</gradient>"
         lore:
           - "<gray>E.G.O. 防具 · 统一抗性 x=0.1"
-          - "<dark_gray>不提供原版护甲值与盔甲韧性"
+          - "<gray>y=1：+10 最大生命 / 生命恢复 I"
+          - "<gray>y=2：+20 最大生命 / 抗性提升 I"
+          - "<gray>y=3：+30 最大生命 / 抗火 I"
+          - "<gray>y=4：+40 最大生命 / 水下呼吸 I / 神圣"
+          - "<gray>y=4：免疫单次 5 点及以下的伤害"
+          - "<dark_gray><italic>你不必担心，我已经听到了你那略带惊恐的祈祷。"
+          - "<dark_gray><italic>如今，你还没有意识到，痛苦这种事物再微小不过了吗？"
+          - "<dark_gray><italic>你需要向我证明你的出人之处。"
+          - "<dark_gray><italic>你应该信任我，将生命奉献给我。然后，我自然会向你展示，什么叫做力量。"
         glint: true
         custom-model-data: 92004
         stackable: false
         enchantable: false
         unbreakable: true
         remove-vanilla-attributes: true
+        armor-trim:
+          pattern: wayfinder
+          material: redstone
 
     weapons:
-      blue-sword:
-        material: NETHERITE_SWORD
-        display-name: "<gradient:#38bdf8:#a855f7>失乐园·蓝伤长剑</gradient>"
+      paradise-hoe:
+        material: IRON_HOE
+        display-name: "<gradient:#ffffff:#cbd5e1>失乐园</gradient>"
         lore:
-          - "<gray>攻击通道：<blue>蓝伤"
-          - "<dark_gray>蓝伤只能由 E.G.O. 来源造成"
+          - "<gray>等级：<red>ALEPH"
+          - "<gray>可研发数量：<white>不可研发"
+          - "<gray>属性：<blue>灵魂"
+          - "<gray>攻击力：<white>22~28"
+          - "<gray>攻击速度：<white>2 秒"
+          - "<gray>攻击距离：<white>16 格"
+          - "<gray>命中回复：<white>每个目标 2~4 点生命"
+          - "<gray>命中减速：<white>60% / 0.5 秒"
+          - "<gray>每 20 秒特殊攻击：<white>前方 8 × 3 × 8，50~60 灵魂伤害"
+          - "<dark_gray><italic>乐园的大门因我的敲击而缓缓打开。"
+          - "<dark_gray><italic>我自终末而来，我并无留恋，只是在此驻足。"
+          - "<dark_gray><italic>我就是那个点燃希望之灯，面对世界之人。"
+          - "<dark_gray><italic>我心爱的人儿，从现在开始，我会将那最美妙的，无比璀璨的道路展现在你们面前。"
         glint: true
         custom-model-data: 92005
         stackable: false
@@ -99,33 +170,21 @@ sets:
         unbreakable: true
         remove-vanilla-attributes: true
         attack-channel: BLUE
-      red-sword:
-        material: NETHERITE_SWORD
-        display-name: "<gradient:#ef4444:#a855f7>失乐园·红伤长剑</gradient>"
-        lore:
-          - "<gray>攻击通道：<red>红伤"
-          - "<dark_gray>红伤可以由 E.G.O. 或普通攻击来源造成"
-        glint: true
-        custom-model-data: 92006
-        stackable: false
-        enchantable: false
-        unbreakable: true
-        remove-vanilla-attributes: true
-        attack-channel: RED
-
-    accessories:
-      charm:
-        material: ECHO_SHARD
-        display-name: "<gradient:#a855f7:#38bdf8>失乐园饰品</gradient>"
-        lore:
-          - "<gray>E.G.O. 饰品不参与防具抗性件数计算"
-          - "<dark_gray>武器与饰品都不影响 y"
-        glint: true
-        custom-model-data: 92007
-        stackable: false
-        enchantable: false
-        unbreakable: true
-        remove-vanilla-attributes: true
+        attributes:
+          attack-speed: 0.5
+          attack-damage: 0.0
+        ability:
+          type: paradise-summon
+          range: 16
+          forward: 8
+          side: 3
+          height: 8
+          damage-min: 22
+          damage-max: 28
+          hits-min: 1
+          hits-max: 1
+          require-full-charge: false
+          percentage-damage: true
 
   justice-arbiter:
     display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
