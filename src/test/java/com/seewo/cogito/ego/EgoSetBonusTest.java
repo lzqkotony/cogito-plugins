@@ -47,9 +47,10 @@ class EgoSetBonusTest {
     }
 
     @Test
-    void fullSetOnlyBlocksDamageStrictlyBelowFive() {
+    void fullSetBlocksRawDamageAtOrBelowFive() {
         assertTrue(paradise.blocksDamage(4.999D, 4));
-        assertFalse(paradise.blocksDamage(5.0D, 4));
+        assertTrue(paradise.blocksDamage(5.0D, 4));
+        assertFalse(paradise.blocksDamage(5.001D, 4));
         assertFalse(paradise.blocksDamage(3.0D, 3));
     }
 
