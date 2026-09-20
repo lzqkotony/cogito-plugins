@@ -172,18 +172,8 @@ public final class EgoSetBonusService {
     }
 
     private void renderShield(Player player, double amount) {
-        player.removePotionEffect(PotionEffectType.ABSORPTION);
-        if (amount <= 0.0D) {
-            return;
-        }
-        int amplifier = Math.max(0, (int) Math.ceil(amount / 4.0D) - 1);
-        player.addPotionEffect(new PotionEffect(
-                PotionEffectType.ABSORPTION,
-                EFFECT_REFRESH_TICKS,
-                amplifier,
-                false,
-                false,
-                false));
+        // Damageable#setAbsorptionAmount 可以保留半颗心的精度，比 ABSORPTION 药水效果更准确。
+        player.setAbsorptionAmount(Math.max(0.0D, amount));
     }
 
     private void clearHolyShield(UUID playerId) {
@@ -192,7 +182,7 @@ public final class EgoSetBonusService {
         }
         Player player = Bukkit.getPlayer(playerId);
         if (player != null && player.isOnline()) {
-            player.removePotionEffect(PotionEffectType.ABSORPTION);
+            player.setAbsorptionAmount(0.0D);
         }
     }
 
