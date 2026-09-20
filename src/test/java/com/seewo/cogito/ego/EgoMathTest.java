@@ -33,9 +33,9 @@ class EgoMathTest {
     }
 
     @Test
-    void negativeResistanceBecomesPositiveVulnerabilityMultiplier() {
-        assertEquals(11.0D, EgoMath.resistanceFactor(-10.0D, 4), 1.0E-9D);
-        assertEquals(6.0D, EgoMath.resistanceFactor(-10.0D, 2), 1.0E-9D);
+    void negativeResistanceProducesNegativeHealingMultiplier() {
+        assertEquals(-10.0D, EgoMath.resistanceFactor(-10.0D, 4), 1.0E-9D);
+        assertEquals(-4.5D, EgoMath.resistanceFactor(-10.0D, 2), 1.0E-9D);
     }
 
     @Test

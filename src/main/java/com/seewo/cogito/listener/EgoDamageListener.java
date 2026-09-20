@@ -33,7 +33,16 @@ public final class EgoDamageListener implements Listener {
 
         double before = event.getDamage();
         double after = EgoMath.apply(before, equipped.resistance(), equipped.pieces());
-        event.setDamage(after);
+        double healed = 0.0D;
+
+        if (equipped.resistance() < 0.0D && after < 0.0D) {
+            // Negative resistance = invert damage into healing. Cancel the vanilla damage first.
+            event.setCancelled(true);
+            healed = -after;
+            player.setHealth(Math.min(player.getMaxHealth(), player.getHealth() + healed));
+        } else {
+            event.setDamage(Math.max(0.0D, after));
+        }
 
         if (plugin.getConfig().getBoolean("debug", false)) {
             plugin.getLogger().info("E.G.O. 抗性结算：" + player.getName()
@@ -41,7 +50,8 @@ public final class EgoDamageListener implements Listener {
                     + " y=" + equipped.pieces()
                     + " x=" + equipped.resistance()
                     + " before=" + before
-                    + " after=" + after);
+                    + " after=" + after
+                    + (healed > 0.0D ? " healed=" + healed : ""));
         }
     }
 }

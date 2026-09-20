@@ -12,8 +12,8 @@ public final class EgoMath {
     /**
      * 计算最终伤害倍率。
      *
-     * <p>非负抗性使用 {@code 1 - (1 - x) * y / 4}；负抗性表示易伤，使用
-     * {@code 1 + (-x) * y / 4}，保证倍率不会变成会反向治疗的负数。
+     * <p>统一使用 {@code 1 - (1 - x) * y / 4}，不再把负抗性转换成“易伤”正倍率。
+     * 负倍率由伤害监听器解释为等量治疗。例如 {@code x=-10, y=4} 得到 {@code r=-10}。
      */
     public static double resistanceFactor(double resistance, int pieces) {
         if (!Double.isFinite(resistance)) {
@@ -23,13 +23,7 @@ public final class EgoMath {
         if (validPieces == 0) {
             return 1.0D;
         }
-        double factor;
-        if (resistance >= 0.0D) {
-            factor = 1.0D - (1.0D - resistance) * validPieces / 4.0D;
-        } else {
-            factor = 1.0D + (-resistance) * validPieces / 4.0D;
-        }
-        return Math.max(0.0D, factor);
+        return 1.0D - (1.0D - resistance) * validPieces / 4.0D;
     }
 
     /**
