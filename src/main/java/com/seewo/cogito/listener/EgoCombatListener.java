@@ -104,6 +104,16 @@ public final class EgoCombatListener implements Listener {
                     || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
                 event.setCancelled(true);
                 paradiseLost.trySummon(player);
+            } else if (event.getAction() == Action.LEFT_CLICK_AIR) {
+                event.setCancelled(true);
+                withSuppressedAbilities(() -> paradiseLost.tryAttack(player, null));
+            }
+            return;
+        }
+        if (isJusticeAbility(weapon.ability())) {
+            if (event.getAction() == Action.LEFT_CLICK_AIR) {
+                event.setCancelled(true);
+                tryJusticeSwing(player, null);
             }
             return;
         }

@@ -35,15 +35,15 @@ public final class EgoDamageListener implements Listener {
 
         double before = event.getDamage();
         double protectedDamage = vanillaProtectedDamage(event);
+        double after = EgoMath.apply(protectedDamage, equipped.resistance(), equipped.pieces());
         if (equipped.pieces() >= 4
                 && plugin.ego().set(equipped.setId()).bonus()
-                .blocksDamage(protectedDamage, equipped.pieces())) {
+                .blocksDamage(after, equipped.pieces())) {
             event.setCancelled(true);
-            debug(player, equipped, before, protectedDamage, 0.0D, "immunity<=5", 0.0D);
+            debug(player, equipped, before, protectedDamage, after, "immunity<5-after-x", 0.0D);
             return;
         }
 
-        double after = EgoMath.apply(protectedDamage, equipped.resistance(), equipped.pieces());
         double healed = 0.0D;
 
         if (equipped.resistance() < 0.0D && after < 0.0D) {

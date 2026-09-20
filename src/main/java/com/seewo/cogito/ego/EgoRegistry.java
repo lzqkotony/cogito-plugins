@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 
 /** E.G.O. 配置与防具/武器识别。 */
 public final class EgoRegistry {
@@ -91,7 +93,8 @@ public final class EgoRegistry {
                     opOnly,
                     costs,
                     bonus,
-                    blueprintId);
+                    blueprintId,
+                    new LinkedHashSet<>(setSection.getStringList("acquisition-whitelist")));
             sets.put(setId, definition);
             registerAliases(setId, setSection.getStringList("aliases"));
 
@@ -359,6 +362,63 @@ public final class EgoRegistry {
             return null;
         }
         return item;
+    }
+
+    /** 检查玩家是否允许获取某个 E.G.O. 物品；空白名单表示不限制。 */
+    public boolean canAcquire(Player player, CustomItem item) {
+        if (player == null || item == null || item.egoSetId() == null) {
+            return true;
+        }
+        EgoSetDefinition definition = set(item.egoSetId());
+        return definition == null || canAcquire(player, definition);
+    }
+
+    /** 检查玩家是否在白名单内；白名单支持玩家名、BE_ 名称或 UUID。 */
+    public boolean canAcquire(Player player, EgoSetDefinition definition) {
+        return player != null
+                && definition != null
+                && definition.canBeAcquiredBy(player.getName(), player.getUniqueId());
+    }
+
+    /** 清理不在白名单内的受限套装物品；用于登录和防止通过掉落/容器绕过。 */
+    public int purgeRestrictedItems(Player player) {
+        if (player == null) {
+            return 0;
+        }
+        int removed = 0;
+        var inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            removed += purgeSlot(inventory, slot, player);
+        }
+        for (EquipmentSlot slot : new EquipmentSlot[]{
+                EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
+                EquipmentSlot.FEET, EquipmentSlot.OFF_HAND}) {
+            removed += purgeSlot(inventory, slot, player);
+        }
+        for (int slot = 0; slot < player.getEnderChest().getSize(); slot++) {
+            removed += purgeSlot(player.getEnderChest(), slot, player);
+        }
+        return removed;
+    }
+
+    private int purgeSlot(org.bukkit.inventory.Inventory inventory, int slot, Player player) {
+        ItemStack current = inventory.getItem(slot);
+        CustomItem item = plugin.items().identify(current);
+        if (item == null || canAcquire(player, item)) {
+            return 0;
+        }
+        inventory.setItem(slot, null);
+        return 1;
+    }
+
+    private int purgeSlot(PlayerInventory inventory, EquipmentSlot slot, Player player) {
+        ItemStack current = inventory.getItem(slot);
+        CustomItem item = plugin.items().identify(current);
+        if (item == null || canAcquire(player, item)) {
+            return 0;
+        }
+        inventory.setItem(slot, null);
+        return 1;
     }
 
     /** 蓝伤只允许由持有 BLUE E.G.O. 武器的玩家作为来源。 */

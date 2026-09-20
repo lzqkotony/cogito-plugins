@@ -18,6 +18,7 @@ import com.seewo.cogito.gui.MenuListener;
 import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.item.ItemRegistry;
 import com.seewo.cogito.listener.EgoCombatListener;
+import com.seewo.cogito.listener.EgoAcquisitionListener;
 import com.seewo.cogito.listener.EgoDamageListener;
 import com.seewo.cogito.listener.EgoEnchantListener;
 import com.seewo.cogito.item.CustomItem;
@@ -94,6 +95,7 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
         getServer().getPluginManager().registerEvents(new ItemBehaviourListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoDamageListener(this), this);
+        getServer().getPluginManager().registerEvents(new EgoAcquisitionListener(this), this);
         this.egoCombatListener = new EgoCombatListener(this);
         getServer().getPluginManager().registerEvents(egoCombatListener, this);
         getServer().getPluginManager().registerEvents(new ServerOwnerProtectionListener(this), this);

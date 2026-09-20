@@ -476,6 +476,11 @@ public final class CogitoCommand implements TabExecutor {
             Messages.send(sender, "<red>数量必须大于 0");
             return true;
         }
+        if (!plugin.ego().canAcquire(target, item)) {
+            Messages.send(sender, "<red><white>" + target.getName()
+                    + "</white> 不在该 E.G.O. 的获取白名单中，OP 权限也不能绕过");
+            return true;
+        }
 
         give(target, item, amount);
         Messages.send(sender, "<green>已给 <white>" + target.getName() + "</white> "
@@ -511,6 +516,12 @@ public final class CogitoCommand implements TabExecutor {
         }
         if (amount <= 0) {
             Messages.send(sender, "<red>数量必须大于 0");
+            return true;
+        }
+        EgoSetDefinition set = plugin.ego().set(setId);
+        if (!plugin.ego().canAcquire(target, set)) {
+            Messages.send(sender, "<red><white>" + target.getName()
+                    + "</white> 不在该 E.G.O. 的获取白名单中，OP 权限也不能绕过");
             return true;
         }
 

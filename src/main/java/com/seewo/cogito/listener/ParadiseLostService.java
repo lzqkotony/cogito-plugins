@@ -71,6 +71,7 @@ public final class ParadiseLostService implements Listener {
     private final Map<UUID, Long> lastAttackAt = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastSpecialAt = new ConcurrentHashMap<>();
     private final Map<UUID, Long> summonReadyAt = new ConcurrentHashMap<>();
+    private final Map<UUID, Boolean> gravityBeforeSummon = new ConcurrentHashMap<>();
     private final Map<UUID, ApostleState> apostles = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> summonTasks = new ConcurrentHashMap<>();
     private final Set<BukkitTask> tasks = ConcurrentHashMap.newKeySet();
@@ -117,18 +118,7 @@ public final class ParadiseLostService implements Listener {
             return true;
         }
 
-        if (!(target instanceof LivingEntity living) || living == player || !living.isValid() || living.isDead()) {
-            return false;
-        }
-        if (living instanceof Player victim
-                && ServerOwnerGuard.isProtected(plugin, player, victim)) {
-            Messages.send(player, "<red>目标受到服主 E.G.O. 保护");
-            return false;
-        }
-
-        if (!strikeSingleTarget(player, living, weapon.ability())) {
-            return false;
-        }
+        strikeCurrentChunk(player, weapon.ability());
         lastAttackAt.put(player.getUniqueId(), now);
         player.setCooldown(player.getInventory().getItemInMainHand(), 40);
         return true;
@@ -161,11 +151,14 @@ public final class ParadiseLostService implements Listener {
         player.setHealth(Math.max(1.0D, player.getHealth() - cost));
         summonReadyAt.put(player.getUniqueId(), now + SUMMON_COOLDOWN_MILLIS);
         player.setCooldown(player.getInventory().getItemInMainHand(), (int) (SUMMON_COOLDOWN_MILLIS / 50L));
+        gravityBeforeSummon.put(player.getUniqueId(), player.hasGravity());
+        player.setGravity(false);
         player.teleport(player.getLocation().clone().add(0.0D, 6.0D, 0.0D));
         player.setVelocity(new Vector());
         player.setFallDistance(0.0F);
         alertNearbyPlayers(player);
         startSummonSequence(player);
+        Messages.send(player, "<white>" + SUMMON_LINE);
         player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.55F, 1.55F);
         return true;
     }
@@ -174,6 +167,7 @@ public final class ParadiseLostService implements Listener {
         if (player == null) {
             return;
         }
+        restoreSummonGravity(player);
         BukkitTask task = summonTasks.remove(player.getUniqueId());
         if (task != null) {
             task.cancel();
@@ -187,6 +181,13 @@ public final class ParadiseLostService implements Listener {
         }
         tasks.clear();
         summonTasks.clear();
+        gravityBeforeSummon.forEach((playerId, gravity) -> {
+            Player player = Bukkit.getPlayer(playerId);
+            if (player != null) {
+                player.setGravity(gravity);
+            }
+        });
+        gravityBeforeSummon.clear();
         if (apostleTask != null) {
             apostleTask.cancel();
             apostleTask = null;
@@ -210,15 +211,32 @@ public final class ParadiseLostService implements Listener {
         apostles.remove(event.getEntity().getUniqueId());
     }
 
-    private boolean strikeSingleTarget(Player player, LivingEntity target, EgoAbilityDefinition ability) {
-        double damage = random(ability.minDamage(), ability.maxDamage());
-        boolean applied = plugin.egoDamage().dealDamage(player, target, damage, DamageChannel.BLUE);
-        if (!applied) {
-            return false;
+    /** 普通攻击以玩家所在区块为范围；空挥时也会执行范围查询。 */
+    private void strikeCurrentChunk(Player player, EgoAbilityDefinition ability) {
+        int hits = 0;
+        for (Entity entity : player.getChunk().getEntities()) {
+            if (!(entity instanceof LivingEntity living)
+                    || living == player
+                    || living instanceof ArmorStand
+                    || living.isDead()
+                    || !living.isValid()) {
+                continue;
+            }
+            if (living instanceof Player victim
+                    && ServerOwnerGuard.isProtected(plugin, player, victim)) {
+                continue;
+            }
+            double damage = random(ability.minDamage(), ability.maxDamage());
+            if (!plugin.egoDamage().dealDamage(player, living, damage, DamageChannel.BLUE)) {
+                continue;
+            }
+            onWeaponHit(player, living);
+            spawnWhiteLances(living);
+            hits++;
         }
-        onWeaponHit(player, target);
-        spawnWhiteLances(target);
-        return true;
+        if (hits == 0) {
+            spawnWhiteLances(player);
+        }
     }
 
     private void performSpecialAttack(Player player, EgoAbilityDefinition ability) {
@@ -283,7 +301,6 @@ public final class ParadiseLostService implements Listener {
     }
 
     private void startSummonSequence(Player player) {
-        cleanupPlayer(player);
         int[] elapsed = {0};
         int[] spawned = {0};
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
@@ -291,15 +308,23 @@ public final class ParadiseLostService implements Listener {
                 cleanupPlayer(player);
                 return;
             }
-            player.setFallDistance(0.0F);
-            spawnWings(player);
-            if (elapsed[0] % SUMMON_INTERVAL_TICKS == 0 && spawned[0] < SUMMON_COUNT) {
-                spawnApostle(player, spawned[0]);
-                spawned[0]++;
+            if (elapsed[0] < SUMMON_TOTAL_TICKS) {
+                player.setGravity(false);
+                player.setVelocity(new Vector());
+                player.setFallDistance(0.0F);
+                spawnWings(player);
+                if (elapsed[0] % SUMMON_INTERVAL_TICKS == 0 && spawned[0] < SUMMON_COUNT) {
+                    spawnApostle(player, spawned[0]);
+                    spawned[0]++;
+                }
+                elapsed[0] += 2;
+                return;
             }
-            elapsed[0] += 2;
-            if (elapsed[0] >= SUMMON_TOTAL_TICKS && spawned[0] >= SUMMON_COUNT) {
-                cleanupPlayer(player);
+            restoreSummonGravity(player);
+            BukkitTask current = summonTasks.remove(player.getUniqueId());
+            if (current != null) {
+                current.cancel();
+                tasks.remove(current);
             }
         }, 0L, 2L);
         summonTasks.put(player.getUniqueId(), task);
@@ -320,6 +345,7 @@ public final class ParadiseLostService implements Listener {
                 continue;
             }
             nearby.showTitle(title);
+            Messages.send(nearby, "<white>" + SUMMON_LINE);
             nearby.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 0, false, true, true));
             nearby.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 100, 0, false, true, true));
         }
@@ -337,6 +363,8 @@ public final class ParadiseLostService implements Listener {
         skeleton.setRemoveWhenFarAway(false);
         skeleton.setCanPickupItems(false);
         skeleton.setCollidable(false);
+        skeleton.setGravity(false);
+        skeleton.setVelocity(new Vector());
         skeleton.setAware(true);
         skeleton.customName(Messages.of("<white>失乐园的使徒"));
         skeleton.setCustomNameVisible(false);
@@ -371,7 +399,8 @@ public final class ParadiseLostService implements Listener {
                 now,
                 now,
                 now,
-                0L));
+                0L,
+                true));
     }
 
     private void startApostleTask() {
@@ -394,11 +423,20 @@ public final class ParadiseLostService implements Listener {
                 iterator.remove();
                 continue;
             }
-            if (state.expiresAt == 0L && skeleton.isOnGround() && now - state.spawnedAt > 1500L) {
-                state.expiresAt = now + APOSTLE_LIFETIME_MILLIS;
+            if (state.airborne) {
+                skeleton.setGravity(false);
+                skeleton.setVelocity(new Vector());
+                continue;
             }
-            if (state.expiresAt == 0L && now - state.spawnedAt > 10_000L) {
-                state.expiresAt = now + APOSTLE_LIFETIME_MILLIS;
+            if (state.expiresAt == 0L) {
+                if (skeleton.isOnGround() && now - state.spawnedAt > 1500L) {
+                    state.expiresAt = now + APOSTLE_LIFETIME_MILLIS;
+                } else if (now - state.spawnedAt > 10_000L) {
+                    state.expiresAt = now + APOSTLE_LIFETIME_MILLIS;
+                } else {
+                    skeleton.setGravity(true);
+                    continue;
+                }
             }
 
             LivingEntity target = findApostleTarget(skeleton, state);
@@ -554,6 +592,24 @@ public final class ParadiseLostService implements Listener {
         }
     }
 
+    private void restoreSummonGravity(Player player) {
+        Boolean previous = gravityBeforeSummon.remove(player.getUniqueId());
+        if (previous != null) {
+            player.setGravity(previous);
+        }
+        for (ApostleState state : apostles.values()) {
+            if (!state.ownerId.equals(player.getUniqueId()) || !state.airborne) {
+                continue;
+            }
+            state.airborne = false;
+            Entity entity = Bukkit.getEntity(state.entityId);
+            if (entity != null) {
+                entity.setGravity(true);
+                entity.setVelocity(new Vector());
+            }
+        }
+    }
+
     private double random(double min, double max) {
         if (max <= min) {
             return min;
@@ -568,6 +624,7 @@ public final class ParadiseLostService implements Listener {
         private long nextDashAt;
         private long nextMeleeAt;
         private long expiresAt;
+        private boolean airborne;
 
         private ApostleState(
                 UUID entityId,
@@ -575,13 +632,15 @@ public final class ParadiseLostService implements Listener {
                 long spawnedAt,
                 long nextDashAt,
                 long nextMeleeAt,
-                long expiresAt) {
+                long expiresAt,
+                boolean airborne) {
             this.entityId = entityId;
             this.ownerId = ownerId;
             this.spawnedAt = spawnedAt;
             this.nextDashAt = nextDashAt;
             this.nextMeleeAt = nextMeleeAt;
             this.expiresAt = expiresAt;
+            this.airborne = airborne;
         }
     }
 }

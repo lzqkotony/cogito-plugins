@@ -82,7 +82,7 @@ public record EgoSetBonus(
     }
 
     public boolean blocksDamage(double damage, int pieces) {
-        return pieces >= 4 && damageImmunityThreshold > 0.0D && damage <= damageImmunityThreshold;
+        return pieces >= 4 && damageImmunityThreshold > 0.0D && damage < damageImmunityThreshold;
     }
 
     public boolean hasSkill(String id, int pieces) {

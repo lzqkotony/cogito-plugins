@@ -44,6 +44,10 @@ public final class EgoDevelopmentService {
             Messages.send(player, "<red>这套 E.G.O. 不能通过图纸研发");
             return false;
         }
+        if (!plugin.ego().canAcquire(player, set)) {
+            Messages.send(player, "<red>你不在该 E.G.O. 的获取白名单中");
+            return false;
+        }
         PlayerProfile profile = profile(player);
         if (profile == null) {
             Messages.send(player, "<red>玩家数据尚未加载，请稍后再试");
@@ -80,6 +84,10 @@ public final class EgoDevelopmentService {
         }
         if (!set.canDevelop(category)) {
             Messages.send(player, "<red>这套 E.G.O. 没有可研发的" + category.displayName());
+            return false;
+        }
+        if (!plugin.ego().canAcquire(player, set)) {
+            Messages.send(player, "<red>你不在该 E.G.O. 的获取白名单中");
             return false;
         }
         if (!isUnlocked(player, set)) {
