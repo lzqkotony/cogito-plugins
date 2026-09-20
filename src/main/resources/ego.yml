@@ -236,7 +236,7 @@ sets:
           - "<gray>可研发数量：<white>1"
           - "<gray>攻击力：<white>4~8"
           - "<gray>攻速：<white>40 tick / 2 秒硬冷却"
-          - "<gray>攻击距离：<white>4 格"
+          - "<gray>范围：<white>前方 4 / 宽 1 / 高 4"
           - "<gray>每次攻击造成 <white>5</white> 次灵魂伤害"
           - "<gray>40% 概率特殊攻击：<white>3 次 14~20 + 7 次 4~8"
           - "<dark_gray><italic>它的天平能够绝对公正地衡量任何罪恶。"
@@ -253,6 +253,8 @@ sets:
         ability:
           type: justice-soul
           range: 4
+          side: 1
+          height: 4
           damage-min: 4
           damage-max: 8
           hits-min: 5

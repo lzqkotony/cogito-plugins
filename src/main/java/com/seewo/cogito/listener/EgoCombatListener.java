@@ -10,11 +10,14 @@ import com.seewo.cogito.ego.EgoEquipped;
 import com.seewo.cogito.ego.EgoSetDefinition;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
@@ -33,6 +36,7 @@ import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 /** E.G.O. 武器技能与「正义裁决者」整套被动；0.5.2 起蓝伤按最大生命值百分比结算。 */
@@ -48,6 +52,7 @@ public final class EgoCombatListener implements Listener {
     private final CogitoPlugin plugin;
     private final Map<UUID, Long> judgementReadyAt = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastJusticeSwingAt = new ConcurrentHashMap<>();
+    private final Map<UUID, BukkitTask> soulTasks = new ConcurrentHashMap<>();
     private final ThreadLocal<Integer> abilityDepth = ThreadLocal.withInitial(() -> 0);
 
     public EgoCombatListener(CogitoPlugin plugin) {
@@ -166,6 +171,7 @@ public final class EgoCombatListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         judgementReadyAt.remove(event.getPlayer().getUniqueId());
         lastJusticeSwingAt.remove(event.getPlayer().getUniqueId());
+        cancelSoulTask(event.getPlayer());
     }
 
     private boolean tryJusticeSwing(Player attacker, Entity primaryTarget) {
@@ -206,12 +212,7 @@ public final class EgoCombatListener implements Listener {
         EgoAbilityDefinition ability = plugin.items()
                 .identify(attacker.getInventory().getItemInMainHand()).ability();
         if (ability.is(JUSTICE_SOUL)) {
-            LivingEntity target = primaryTarget instanceof LivingEntity living && living != attacker
-                    ? living
-                    : targetInFront(attacker, ability.range());
-            if (target != null) {
-                dealJusticeSoulAttack(attacker, target, ability);
-            }
+            startSoulSequence(attacker, ability);
             return;
         }
 
@@ -278,27 +279,105 @@ public final class EgoCombatListener implements Listener {
         spawnBlueTrail(origin.clone().add(forward.clone().multiply(2.0D)), ability);
     }
 
-    private LivingEntity targetInFront(Player attacker, double range) {
-        Entity target = attacker.getTargetEntity((int) Math.ceil(Math.max(1.0D, range)), false);
-        return target instanceof LivingEntity living && living != attacker ? living : null;
-    }
+    /**
+     * Starts the ALEPH soul sequence. The area is frozen at the moment of the swing and the
+     * damage is dealt over the next two seconds, rather than in one burst.
+     */
+    private void startSoulSequence(Player attacker, EgoAbilityDefinition ability) {
+        cancelSoulTask(attacker);
+        Location origin = attacker.getLocation().add(0.0D, 1.0D, 0.0D);
+        Vector forward = attacker.getEyeLocation().getDirection().setY(0.0D);
+        if (forward.lengthSquared() < 1.0E-6D) {
+            forward = attacker.getLocation().getDirection().setY(0.0D);
+        }
+        if (forward.lengthSquared() < 1.0E-6D) {
+            forward = new Vector(0.0D, 0.0D, 1.0D);
+        } else {
+            forward.normalize();
+        }
+        AttackArea area = new AttackArea(
+                attacker.getWorld(),
+                origin,
+                forward,
+                Math.max(1.0D, ability.range()),
+                Math.max(0.5D, ability.sideBlocks() / 2.0D),
+                Math.max(1.0D, ability.heightBlocks()));
 
-    private void dealJusticeSoulAttack(Player attacker, LivingEntity target, EgoAbilityDefinition ability) {
         boolean special = ability.specialChance() > 0.0D
                 && ThreadLocalRandom.current().nextDouble() < ability.specialChance();
-        if (special) {
-            for (int i = 0; i < ability.specialHeavyHits(); i++) {
-                applyFlatHit(attacker, target, ability.specialHeavyMinDamage(), ability.specialHeavyMaxDamage());
+        int heavyHits = Math.max(0, ability.specialHeavyHits());
+        int lightHits = Math.max(0, ability.specialLightHits());
+        int totalHits = special ? heavyHits + lightHits : Math.max(1, ability.minHits());
+        long period = special ? 4L : 10L; // 10 hits / 4 ticks, or 5 hits / 10 ticks.
+        int[] hitIndex = {0};
+        BukkitTask[] holder = new BukkitTask[1];
+        holder[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (!attacker.isOnline() || attacker.isDead()) {
+                cancelSoulTask(attacker);
+                return;
             }
-            for (int i = 0; i < ability.specialLightHits(); i++) {
-                applyFlatHit(attacker, target, ability.specialLightMinDamage(), ability.specialLightMaxDamage());
+            int current = hitIndex[0]++;
+            if (current >= totalHits) {
+                cancelSoulTask(attacker);
+                return;
             }
-        } else {
-            for (int i = 0; i < ability.minHits(); i++) {
-                applyFlatHit(attacker, target, ability.minDamage(), ability.maxDamage());
+            Collection<LivingEntity> targets = findSoulTargets(area, attacker);
+            if (targets.isEmpty()) {
+                return;
             }
+
+            double min;
+            double max;
+            if (special && current < heavyHits) {
+                min = ability.specialHeavyMinDamage();
+                max = ability.specialHeavyMaxDamage();
+            } else if (special) {
+                min = ability.specialLightMinDamage();
+                max = ability.specialLightMaxDamage();
+            } else {
+                min = ability.minDamage();
+                max = ability.maxDamage();
+            }
+            final double hitMin = min;
+            final double hitMax = max;
+            withSuppressedAbilities(() -> {
+                for (LivingEntity target : targets) {
+                    applyFlatHit(attacker, target, hitMin, hitMax);
+                }
+            });
+            spawnBlueTrail(area.origin().clone().add(area.forward().clone().multiply(2.0D)), ability);
+        }, 0L, period);
+        soulTasks.put(attacker.getUniqueId(), holder[0]);
+    }
+
+    private Collection<LivingEntity> findSoulTargets(AttackArea area, Player attacker) {
+        List<LivingEntity> result = new ArrayList<>();
+        Location center = area.origin().clone().add(
+                area.forward().clone().multiply(area.range() / 2.0D));
+        for (Entity entity : area.world().getNearbyEntities(
+                center, area.range(), area.vertical(), area.range())) {
+            if (!(entity instanceof LivingEntity living) || living == attacker
+                    || !living.isValid() || living.isDead()) {
+                continue;
+            }
+            if (living instanceof Player victim && ServerOwnerGuard.isProtected(plugin, attacker, victim)) {
+                continue;
+            }
+            Vector relative = living.getLocation().toVector().subtract(area.origin().toVector());
+            double forwardDistance = relative.dot(area.forward());
+            if (forwardDistance < 0.0D || forwardDistance > area.range()) {
+                continue;
+            }
+            Vector lateral = relative.clone().subtract(area.forward().clone().multiply(forwardDistance));
+            if (Math.abs(lateral.getX()) > area.side() || Math.abs(lateral.getZ()) > area.side()) {
+                continue;
+            }
+            if (Math.abs(relative.getY()) > area.vertical()) {
+                continue;
+            }
+            result.add(living);
         }
-        spawnBlueTrail(target.getLocation().add(0.0D, 1.0D, 0.0D), ability);
+        return result;
     }
 
     private void applyFlatHit(Player attacker, LivingEntity target, double min, double max) {
@@ -308,6 +387,22 @@ public final class EgoCombatListener implements Listener {
         double damage = max <= min ? min : ThreadLocalRandom.current().nextDouble(min, max);
         target.setNoDamageTicks(0);
         plugin.egoDamage().dealFlatDamage(attacker, target, damage, DamageChannel.BLUE);
+    }
+
+    private void cancelSoulTask(Player player) {
+        BukkitTask task = soulTasks.remove(player.getUniqueId());
+        if (task != null && !task.isCancelled()) {
+            task.cancel();
+        }
+    }
+
+    private record AttackArea(
+            org.bukkit.World world,
+            Location origin,
+            Vector forward,
+            double range,
+            double side,
+            double vertical) {
     }
 
     private boolean isJusticeAbility(EgoAbilityDefinition ability) {
