@@ -34,14 +34,6 @@ public final class EgoDamageListener implements Listener {
         }
 
         double before = event.getDamage();
-        if (equipped.pieces() >= 4
-                && plugin.ego().set(equipped.setId()).bonus()
-                .blocksDamage(before, equipped.pieces())) {
-            event.setCancelled(true);
-            debug(player, equipped, before, 0.0D, 0.0D, "immunity<=5-before-calc", 0.0D);
-            return;
-        }
-
         double protectedDamage = vanillaProtectedDamage(event);
         double after = EgoMath.apply(protectedDamage, equipped.resistance(), equipped.pieces());
 

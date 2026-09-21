@@ -24,8 +24,7 @@ class EgoSetBonusTest {
             "holy",
             10,
             1.0D,
-            20.0D,
-            5.0D);
+            20.0D);
 
     @Test
     void appliesPierceThresholdsWithoutRegressingAtHigherPieceCounts() {
@@ -44,14 +43,6 @@ class EgoSetBonusTest {
     void maximumHealthScalesWithEveryArmorPiece() {
         assertEquals(10.0D, paradise.maxHealth(1), 1.0E-9D);
         assertEquals(40.0D, paradise.maxHealth(4), 1.0E-9D);
-    }
-
-    @Test
-    void fullSetBlocksRawDamageAtOrBelowFive() {
-        assertTrue(paradise.blocksDamage(4.999D, 4));
-        assertTrue(paradise.blocksDamage(5.0D, 4));
-        assertFalse(paradise.blocksDamage(5.001D, 4));
-        assertFalse(paradise.blocksDamage(3.0D, 3));
     }
 
     @Test

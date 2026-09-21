@@ -157,8 +157,7 @@ public final class EgoRegistry {
                 section.getString("skill", ""),
                 section.getInt("skill-cooldown-seconds", 0),
                 section.getDouble("skill-charge-per-activation", 0.0D),
-                section.getDouble("skill-max-charge", 0.0D),
-                section.getDouble("damage-immunity-threshold", 0.0D));
+                section.getDouble("skill-max-charge", 0.0D));
     }
 
     private NavigableMap<Integer, Double> readThresholds(ConfigurationSection section) {

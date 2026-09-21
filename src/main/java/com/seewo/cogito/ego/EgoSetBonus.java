@@ -20,8 +20,7 @@ public record EgoSetBonus(
         String skill,
         int skillCooldownSeconds,
         double skillChargePerActivation,
-        double skillMaxCharge,
-        double damageImmunityThreshold) {
+        double skillMaxCharge) {
 
     public static EgoSetBonus none() {
         return new EgoSetBonus(
@@ -34,7 +33,6 @@ public record EgoSetBonus(
                 new TreeMap<>(),
                 null,
                 0,
-                0.0D,
                 0.0D,
                 0.0D);
     }
@@ -50,7 +48,6 @@ public record EgoSetBonus(
         skillCooldownSeconds = Math.max(0, skillCooldownSeconds);
         skillChargePerActivation = Math.max(0.0D, skillChargePerActivation);
         skillMaxCharge = Math.max(0.0D, skillMaxCharge);
-        damageImmunityThreshold = Math.max(0.0D, damageImmunityThreshold);
     }
 
     public double maxHealth(int pieces) {
@@ -79,10 +76,6 @@ public record EgoSetBonus(
 
     public int waterBreathingLevel(int pieces) {
         return levelAtMost(waterBreathingLevelByPieces, pieces);
-    }
-
-    public boolean blocksDamage(double damage, int pieces) {
-        return pieces >= 4 && damageImmunityThreshold > 0.0D && damage <= damageImmunityThreshold;
     }
 
     public boolean hasSkill(String id, int pieces) {
