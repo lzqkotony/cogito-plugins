@@ -35,7 +35,10 @@ public final class EgoDamageListener implements Listener {
 
         double before = event.getDamage();
         double protectedDamage = vanillaProtectedDamage(event);
-        double after = EgoMath.apply(protectedDamage, equipped.resistance(), equipped.pieces());
+        double resistance = plugin.mimicService() == null
+                ? equipped.resistance()
+                : plugin.mimicService().effectiveResistance(player, equipped.resistance());
+        double after = EgoMath.apply(protectedDamage, resistance, equipped.pieces());
 
         double healed = 0.0D;
 
@@ -48,7 +51,7 @@ public final class EgoDamageListener implements Listener {
             HolyShieldResult shieldResult = plugin.egoBonuses().absorbWithHolyShield(player, after);
             if (shieldResult != HolyShieldResult.NONE) {
                 event.setCancelled(true);
-                debug(player, equipped, before, protectedDamage, after,
+                debug(player, equipped, before, protectedDamage, resistance, after,
                         "holy-shield:" + shieldResult, healed);
                 return;
             }
@@ -57,7 +60,7 @@ public final class EgoDamageListener implements Listener {
             event.setDamage(0.0D);
         }
 
-        debug(player, equipped, before, protectedDamage, after, null, healed);
+        debug(player, equipped, before, protectedDamage, resistance, after, null, healed);
     }
 
     /** 原版保护结算后的实际伤害；神圣黄盾只负责显示，不计入这里的减伤。 */
@@ -83,6 +86,7 @@ public final class EgoDamageListener implements Listener {
             EgoEquipped equipped,
             double before,
             double protectedDamage,
+            double resistance,
             double after,
             String result,
             double healed) {
@@ -90,7 +94,7 @@ public final class EgoDamageListener implements Listener {
             plugin.getLogger().info("E.G.O. 抗性结算：" + player.getName()
                     + " set=" + equipped.setId()
                     + " y=" + equipped.pieces()
-                    + " x=" + equipped.resistance()
+                    + " x=" + resistance
                     + " before=" + before
                     + " protected=" + protectedDamage
                     + " after=" + after

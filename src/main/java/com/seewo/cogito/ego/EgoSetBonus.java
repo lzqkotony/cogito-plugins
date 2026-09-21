@@ -15,6 +15,7 @@ public record EgoSetBonus(
         NavigableMap<Integer, Double> attackDamageByPieces,
         NavigableMap<Integer, Integer> regenerationLevelByPieces,
         NavigableMap<Integer, Integer> resistanceLevelByPieces,
+        NavigableMap<Integer, Integer> strengthLevelByPieces,
         NavigableMap<Integer, Integer> fireResistanceLevelByPieces,
         NavigableMap<Integer, Integer> waterBreathingLevelByPieces,
         String skill,
@@ -25,6 +26,7 @@ public record EgoSetBonus(
     public static EgoSetBonus none() {
         return new EgoSetBonus(
                 0.0D,
+                new TreeMap<>(),
                 new TreeMap<>(),
                 new TreeMap<>(),
                 new TreeMap<>(),
@@ -42,6 +44,7 @@ public record EgoSetBonus(
         attackDamageByPieces = orderedCopy(attackDamageByPieces);
         regenerationLevelByPieces = orderedLevelCopy(regenerationLevelByPieces);
         resistanceLevelByPieces = orderedLevelCopy(resistanceLevelByPieces);
+        strengthLevelByPieces = orderedLevelCopy(strengthLevelByPieces);
         fireResistanceLevelByPieces = orderedLevelCopy(fireResistanceLevelByPieces);
         waterBreathingLevelByPieces = orderedLevelCopy(waterBreathingLevelByPieces);
         skill = skill == null || skill.isBlank() ? null : skill.toLowerCase(java.util.Locale.ROOT);
@@ -68,6 +71,10 @@ public record EgoSetBonus(
 
     public int resistanceLevel(int pieces) {
         return levelAtMost(resistanceLevelByPieces, pieces);
+    }
+
+    public int strengthLevel(int pieces) {
+        return levelAtMost(strengthLevelByPieces, pieces);
     }
 
     public int fireResistanceLevel(int pieces) {

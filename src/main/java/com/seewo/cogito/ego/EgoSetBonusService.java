@@ -92,6 +92,7 @@ public final class EgoSetBonusService {
         apply(player, Attribute.ATTACK_DAMAGE, attackDamageKey, bonus.attackDamage(equipped.pieces()));
         applyPotion(player, PotionEffectType.REGENERATION, bonus.regenerationLevel(equipped.pieces()));
         applyPotion(player, PotionEffectType.RESISTANCE, bonus.resistanceLevel(equipped.pieces()));
+        applyPotion(player, PotionEffectType.STRENGTH, bonus.strengthLevel(equipped.pieces()));
         applyPotion(player, PotionEffectType.FIRE_RESISTANCE, bonus.fireResistanceLevel(equipped.pieces()));
         applyPotion(player, PotionEffectType.WATER_BREATHING, bonus.waterBreathingLevel(equipped.pieces()));
         reconcileHolyShield(player, definition.id(), bonus, equipped.pieces());

@@ -152,6 +152,7 @@ public final class EgoRegistry {
                 readThresholds(section.getConfigurationSection("attack-damage")),
                 readLevels(section.getConfigurationSection("regeneration-level")),
                 readLevels(section.getConfigurationSection("resistance-level")),
+                readLevels(section.getConfigurationSection("strength-level")),
                 readLevels(section.getConfigurationSection("fire-resistance-level")),
                 readLevels(section.getConfigurationSection("water-breathing-level")),
                 section.getString("skill", ""),

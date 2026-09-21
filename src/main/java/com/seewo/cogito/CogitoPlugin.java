@@ -19,6 +19,7 @@ import com.seewo.cogito.item.EnkephalinItem;
 import com.seewo.cogito.item.ItemRegistry;
 import com.seewo.cogito.listener.EgoCombatListener;
 import com.seewo.cogito.listener.EgoAcquisitionListener;
+import com.seewo.cogito.listener.MimicService;
 import com.seewo.cogito.listener.EgoDamageListener;
 import com.seewo.cogito.listener.EgoEnchantListener;
 import com.seewo.cogito.item.CustomItem;
@@ -56,6 +57,7 @@ public final class CogitoPlugin extends JavaPlugin {
     private EgoDevelopmentService egoDevelopmentService;
     private DevelopTableManager developTableManager;
     private EgoCombatListener egoCombatListener;
+    private MimicService mimicService;
     private PlayerDataService dataService;
     private VaultHook vaultHook;
 
@@ -98,6 +100,9 @@ public final class CogitoPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new EgoAcquisitionListener(this), this);
         this.egoCombatListener = new EgoCombatListener(this);
         getServer().getPluginManager().registerEvents(egoCombatListener, this);
+        this.mimicService = new MimicService(this);
+        getServer().getPluginManager().registerEvents(mimicService, this);
+        mimicService.start();
         getServer().getPluginManager().registerEvents(new ServerOwnerProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new EgoEnchantListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerDataListener(this), this);
@@ -121,6 +126,9 @@ public final class CogitoPlugin extends JavaPlugin {
         }
         if (egoCombatListener != null) {
             egoCombatListener.shutdown();
+        }
+        if (mimicService != null) {
+            mimicService.stop();
         }
         if (dataService != null) {
             dataService.shutdown();
@@ -189,6 +197,10 @@ public final class CogitoPlugin extends JavaPlugin {
 
     public EgoSetBonusService egoBonuses() {
         return egoSetBonusService;
+    }
+
+    public MimicService mimicService() {
+        return mimicService;
     }
 
     public EgoDevelopmentService egoDevelopment() {

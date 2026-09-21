@@ -19,6 +19,7 @@ class EgoSetBonusTest {
             new TreeMap<>(),
             new TreeMap<>(Map.of(1, 1, 4, 2)),
             new TreeMap<>(Map.of(2, 1, 4, 2)),
+            new TreeMap<>(Map.of(2, 2, 4, 2)),
             new TreeMap<>(Map.of(3, 1)),
             new TreeMap<>(Map.of(4, 1)),
             "holy",
@@ -34,6 +35,9 @@ class EgoSetBonusTest {
         assertEquals(0, paradise.resistanceLevel(1));
         assertEquals(1, paradise.resistanceLevel(2));
         assertEquals(2, paradise.resistanceLevel(4));
+        assertEquals(0, paradise.strengthLevel(1));
+        assertEquals(2, paradise.strengthLevel(2));
+        assertEquals(2, paradise.strengthLevel(4));
         assertEquals(0, paradise.fireResistanceLevel(2));
         assertEquals(1, paradise.fireResistanceLevel(3));
         assertEquals(1, paradise.waterBreathingLevel(4));

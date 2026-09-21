@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
@@ -30,6 +31,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ArmorMeta;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.trim.ArmorTrim;
 import org.bukkit.inventory.meta.trim.TrimMaterial;
@@ -76,6 +78,7 @@ public final class CustomItem {
     private final Map<Attribute, Double> attributes;
     private final EgoAbilityDefinition ability;
     private final ArmorTrim armorTrim;
+    private final Color dyedColor;
 
     public CustomItem(CogitoPlugin plugin, NamespacedKey itemKey, String id, ConfigurationSection section) {
         this(plugin, itemKey, id, section, null, null, null);
@@ -126,6 +129,7 @@ public final class CustomItem {
         this.attributes = parseAttributes(plugin, id, section.getConfigurationSection("attributes"));
         this.ability = EgoAbilityDefinition.parse(section.getConfigurationSection("ability"));
         this.armorTrim = parseArmorTrim(plugin, id, section.getConfigurationSection("armor-trim"));
+        this.dyedColor = parseColor(plugin, id, section.getString("dyed-color", ""));
 
         this.legacyKeys = new ArrayList<>();
         for (String legacy : section.getStringList("legacy-tags")) {
@@ -177,6 +181,30 @@ public final class CustomItem {
             return null;
         }
         return new ArmorTrim(material, pattern);
+    }
+
+    private static Color parseColor(CogitoPlugin plugin, String id, String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.trim();
+        try {
+            if (normalized.startsWith("#") && normalized.length() == 7) {
+                return Color.fromRGB(Integer.parseInt(normalized.substring(1), 16));
+            }
+            String[] parts = normalized.split(",");
+            if (parts.length == 3) {
+                return Color.fromRGB(
+                        Integer.parseInt(parts[0].trim()),
+                        Integer.parseInt(parts[1].trim()),
+                        Integer.parseInt(parts[2].trim()));
+            }
+        } catch (IllegalArgumentException error) {
+            plugin.getLogger().warning("物品 " + id + " 的 dyed-color 无效：" + value);
+            return null;
+        }
+        plugin.getLogger().warning("物品 " + id + " 的 dyed-color 无效：" + value);
+        return null;
     }
 
     private static NamespacedKey resolveItemModel(CogitoPlugin plugin, String id, String value) {
@@ -236,6 +264,9 @@ public final class CustomItem {
         }
         if (potionType != null && meta instanceof PotionMeta potionMeta) {
             potionMeta.setBasePotionType(potionType);
+        }
+        if (dyedColor != null && meta instanceof LeatherArmorMeta leatherMeta) {
+            leatherMeta.setColor(dyedColor);
         }
         if (enchantment != null) {
             meta.addEnchant(enchantment, enchantmentLevel, true);

@@ -181,6 +181,143 @@ sets:
           require-full-charge: false
           percentage-damage: true
 
+  mimic:
+    display-name: "<gradient:#7f1d1d:#facc15>拟态</gradient>"
+    armor-resistance: 0.4
+    aliases: [mimic, 拟态]
+
+    develop:
+      armor:
+        cost: 333
+      weapon:
+        cost: 333
+      blueprint:
+        material: PAPER
+        glint: true
+
+    set-bonuses:
+      regeneration-level:
+        "1": 1
+        "2": 1
+        "3": 2
+        "4": 2
+      strength-level:
+        "2": 2
+        "3": 2
+        "4": 2
+      resistance-level:
+        "4": 2
+
+    armor:
+      helmet:
+        material: LEATHER_HELMET
+        display-name: "<gradient:#7f1d1d:#facc15>拟态</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.4"
+          - "<gray>y=1：生命恢复 I"
+          - "<gray>y=2：生命恢复 I / 力量 II"
+          - "<gray>y=3：生命恢复 II / 力量 II"
+          - "<gray>y=4：生命恢复 II / 力量 II / 抗性提升 II"
+          - "<dark_gray><italic>被模仿的表象，终究只是表象。"
+        glint: true
+        custom-model-data: 92301
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        dyed-color: "#8f1d1d"
+        armor-trim:
+          pattern: wayfinder
+          material: gold
+      chestplate:
+        material: LEATHER_CHESTPLATE
+        display-name: "<gradient:#7f1d1d:#facc15>拟态</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.4"
+          - "<gray>y=1：生命恢复 I"
+          - "<gray>y=2：生命恢复 I / 力量 II"
+          - "<gray>y=3：生命恢复 II / 力量 II"
+          - "<gray>y=4：生命恢复 II / 力量 II / 抗性提升 II"
+          - "<dark_gray><italic>被模仿的表象，终究只是表象。"
+        glint: true
+        custom-model-data: 92302
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        dyed-color: "#8f1d1d"
+        armor-trim:
+          pattern: wayfinder
+          material: gold
+      leggings:
+        material: LEATHER_LEGGINGS
+        display-name: "<gradient:#7f1d1d:#facc15>拟态</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.4"
+          - "<gray>y=1：生命恢复 I"
+          - "<gray>y=2：生命恢复 I / 力量 II"
+          - "<gray>y=3：生命恢复 II / 力量 II"
+          - "<gray>y=4：生命恢复 II / 力量 II / 抗性提升 II"
+          - "<dark_gray><italic>被模仿的表象，终究只是表象。"
+        glint: true
+        custom-model-data: 92303
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        dyed-color: "#8f1d1d"
+        armor-trim:
+          pattern: wayfinder
+          material: gold
+      boots:
+        material: LEATHER_BOOTS
+        display-name: "<gradient:#7f1d1d:#facc15>拟态</gradient>"
+        lore:
+          - "<gray>E.G.O. 防具 · 统一抗性 x=0.4"
+          - "<gray>y=1：生命恢复 I"
+          - "<gray>y=2：生命恢复 I / 力量 II"
+          - "<gray>y=3：生命恢复 II / 力量 II"
+          - "<gray>y=4：生命恢复 II / 力量 II / 抗性提升 II"
+          - "<dark_gray><italic>被模仿的表象，终究只是表象。"
+        glint: true
+        custom-model-data: 92304
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        dyed-color: "#8f1d1d"
+        armor-trim:
+          pattern: wayfinder
+          material: gold
+
+    weapons:
+      mimic-blade:
+        material: IRON_SWORD
+        display-name: "<gradient:#7f1d1d:#facc15>拟态</gradient>"
+        lore:
+          - "<gray>拟态 I：攻击 +7 / 命中恢复 2"
+          - "<gray>拟态 II：死亡触发，短暂无法移动与攻击"
+          - "<gray>拟态 III：攻击 +11 / 命中恢复 3 / 模仿层数"
+          - "<gray>右键：5 层单体 35 / 10 层范围爆发"
+          - "<dark_gray><italic>模仿得越深，越容易忘记原本的自己。"
+        glint: true
+        custom-model-data: 92305
+        stackable: false
+        enchantable: false
+        unbreakable: true
+        remove-vanilla-attributes: true
+        attack-channel: RED
+        attributes:
+          attack-speed: 2.0
+          attack-damage: 0.0
+        ability:
+          type: mimic
+          range: 20
+          damage-min: 35
+          damage-max: 65
+          require-full-charge: false
+          percentage-damage: false
+
   justice-arbiter:
     display-name: "<gradient:#e2e8f0:#38bdf8>正义裁决者</gradient>"
     armor-resistance: 0.25
