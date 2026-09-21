@@ -112,6 +112,12 @@ public final class EgoSetBonusService {
         if (state == null || state.amount <= 0.0D) {
             return HolyShieldResult.NONE;
         }
+        EgoEquipped equipped = plugin.ego().resolve(player);
+        EgoSetDefinition definition = equipped.active() ? plugin.ego().set(equipped.setId()) : null;
+        if (definition == null || !definition.bonus().hasSkill(HOLY, equipped.pieces())) {
+            clearHolyShield(player.getUniqueId());
+            return HolyShieldResult.NONE;
+        }
         HolyShieldResult result;
         if (damage <= state.amount) {
             state.amount = Math.max(0.0D, state.amount - damage);
@@ -120,8 +126,7 @@ public final class EgoSetBonusService {
             state.amount = 0.0D;
             result = HolyShieldResult.BROKEN;
         }
-        EgoSetDefinition definition = plugin.ego().set(state.setId);
-        double maxCharge = definition == null ? state.amount : definition.bonus().skillMaxCharge();
+        double maxCharge = definition.bonus().skillMaxCharge();
         renderShield(player, state, maxCharge);
         return result;
     }
@@ -145,7 +150,10 @@ public final class EgoSetBonusService {
         long now = System.currentTimeMillis();
         HolyShieldState state = holyShields.get(playerId);
         if (state == null || !setId.equals(state.setId)) {
-            state = new HolyShieldState(setId, 0.0D, now + shieldIntervalMillis(bonus), now);
+            double initialAmount = Math.min(
+                    bonus.skillMaxCharge(),
+                    bonus.skillChargePerActivation());
+            state = new HolyShieldState(setId, initialAmount, now + shieldIntervalMillis(bonus), now);
             holyShields.put(playerId, state);
         } else if (now - state.lastSeenAt > 3000L) {
             state.nextChargeAt = now + shieldIntervalMillis(bonus);
