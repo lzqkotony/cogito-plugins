@@ -7,6 +7,7 @@ import com.seewo.cogito.CogitoPlugin;
 import com.seewo.cogito.item.CustomItem;
 import com.seewo.cogito.text.Messages;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -119,7 +120,9 @@ public final class EgoSetBonusService {
             state.amount = 0.0D;
             result = HolyShieldResult.BROKEN;
         }
-        renderShield(player, state.amount);
+        EgoSetDefinition definition = plugin.ego().set(state.setId);
+        double maxCharge = definition == null ? state.amount : definition.bonus().skillMaxCharge();
+        renderShield(player, state, maxCharge);
         return result;
     }
 
@@ -164,16 +167,43 @@ public final class EgoSetBonusService {
                 state.nextChargeAt = now + interval;
             }
         }
-        renderShield(player, state.amount);
+        renderShield(player, state, bonus.skillMaxCharge());
     }
 
     private long shieldIntervalMillis(EgoSetBonus bonus) {
         return Math.max(1, bonus.skillCooldownSeconds()) * 1000L;
     }
 
-    private void renderShield(Player player, double amount) {
+    private void renderShield(Player player, HolyShieldState state, double maxCharge) {
+        double amount = Math.max(0.0D, state.amount);
         // Damageable#setAbsorptionAmount 可以保留半颗心的精度，比 ABSORPTION 药水效果更准确。
-        player.setAbsorptionAmount(Math.max(0.0D, amount));
+        player.setAbsorptionAmount(amount);
+
+        long now = System.currentTimeMillis();
+        boolean changed = Math.abs(state.lastDisplayedAmount - amount) > 1.0E-6D;
+        boolean refreshDue = state.lastDisplayedAt == 0L || now - state.lastDisplayedAt >= 5000L;
+        if (amount <= 0.0D) {
+            if (changed) {
+                state.lastDisplayedAmount = 0.0D;
+                state.lastDisplayedAt = now;
+                Messages.actionBar(player, "<gold>神圣黄盾 <red>已破碎");
+            }
+            return;
+        }
+        if (!changed && !refreshDue) {
+            return;
+        }
+        state.lastDisplayedAmount = amount;
+        state.lastDisplayedAt = now;
+        Messages.actionBar(player, "<gold>神圣黄盾 <yellow>" + formatAmount(amount)
+                + "</yellow><gray>/" + formatAmount(maxCharge));
+    }
+
+    private String formatAmount(double amount) {
+        if (Math.abs(amount - Math.rint(amount)) < 1.0E-6D) {
+            return Long.toString(Math.round(amount));
+        }
+        return String.format(Locale.ROOT, "%.1f", amount);
     }
 
     private void clearHolyShield(UUID playerId) {
@@ -257,6 +287,8 @@ public final class EgoSetBonusService {
         private double amount;
         private long nextChargeAt;
         private long lastSeenAt;
+        private double lastDisplayedAmount;
+        private long lastDisplayedAt;
 
         private HolyShieldState(String setId, double amount, long nextChargeAt, long lastSeenAt) {
             this.setId = setId;

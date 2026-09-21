@@ -18,6 +18,7 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -308,6 +309,10 @@ public final class EgoRegistry {
             }
             CustomItem item = plugin.items().identify(stack);
             EgoPiece expected = EgoPiece.forSlot(slot);
+            if (isFunctionalElytra(slot, stack.getType() == Material.ELYTRA, item)) {
+                // 鞘翅是功能性装备：允许占用胸甲槽，但不计入 E.G.O. 件数 y。
+                continue;
+            }
             if (item == null || item.egoPiece() != expected || item.egoSetId() == null) {
                 return EgoEquipped.invalid(setId, pieces);
             }
@@ -335,6 +340,12 @@ public final class EgoRegistry {
                 pieces,
                 definition.resistance(),
                 factor);
+    }
+
+    static boolean isFunctionalElytra(EquipmentSlot slot, boolean isElytra, CustomItem item) {
+        return slot == EquipmentSlot.CHEST
+                && isElytra
+                && (item == null || item.egoSetId() == null);
     }
 
     /** 玩家是否穿着指定套装的任意一件防具；用于彩蛋保护、OP 穿戴限制等无视混搭的判定。 */

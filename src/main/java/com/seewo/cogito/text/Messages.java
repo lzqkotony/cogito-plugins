@@ -6,6 +6,7 @@ package com.seewo.cogito.text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 /** 统一的文本出口：所有提示都走 MiniMessage，支持渐变、颜色、占位符。 */
 public final class Messages {
@@ -28,5 +29,10 @@ public final class Messages {
     /** 不带前缀的原文输出。 */
     public static void raw(CommandSender to, String miniMessage) {
         to.sendMessage(MINI.deserialize(miniMessage));
+    }
+
+    /** 在玩家准星上方显示 ActionBar。 */
+    public static void actionBar(Player player, String miniMessage) {
+        player.sendActionBar(MINI.deserialize(miniMessage));
     }
 }
