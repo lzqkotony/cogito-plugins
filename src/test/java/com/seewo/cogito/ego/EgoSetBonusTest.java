@@ -25,7 +25,8 @@ class EgoSetBonusTest {
             "holy",
             10,
             1.0D,
-            20.0D);
+            20.0D,
+            5.0D);
 
     @Test
     void appliesPierceThresholdsWithoutRegressingAtHigherPieceCounts() {
@@ -53,5 +54,12 @@ class EgoSetBonusTest {
     void holyOnlyUnlocksAtFourPieces() {
         assertFalse(paradise.hasSkill("holy", 3));
         assertTrue(paradise.hasSkill("holy", 4));
+    }
+
+    @Test
+    void fullSetBlocksRawDamageStrictlyBelowFive() {
+        assertTrue(paradise.blocksDamage(4.999D, 4));
+        assertFalse(paradise.blocksDamage(5.0D, 4));
+        assertFalse(paradise.blocksDamage(4.999D, 3));
     }
 }
