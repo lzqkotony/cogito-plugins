@@ -133,6 +133,10 @@ public final class EgoCombatListener implements Listener {
         Entity target = player.getTargetEntity((int) Math.ceil(Math.max(1.0D, weapon.ability().range())), false);
         if (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             event.setCancelled(true);
+            if (target != null && ServerOwnerGuard.isCitizensNpc(target)) {
+                Messages.send(player, "<red>NPC 受到服主 E.G.O. 保护");
+                return;
+            }
             if (target instanceof Player victim) {
                 if (ServerOwnerGuard.isProtected(plugin, player, victim)) {
                     Messages.send(player, "<red>目标受到服主 E.G.O. 保护");
@@ -199,6 +203,10 @@ public final class EgoCombatListener implements Listener {
             return;
         }
         event.setCancelled(true);
+        if (ServerOwnerGuard.isCitizensNpc(event.getRightClicked())) {
+            Messages.send(player, "<red>NPC 受到服主 E.G.O. 保护");
+            return;
+        }
         if (event.getRightClicked() instanceof Player victim) {
             if (ServerOwnerGuard.isProtected(plugin, player, victim)) {
                 Messages.send(player, "<red>目标受到服主 E.G.O. 保护");
@@ -549,6 +557,10 @@ public final class EgoCombatListener implements Listener {
     }
 
     private void killWithOwnerWeapon(Player attacker, LivingEntity target) {
+        if (ServerOwnerGuard.isCitizensNpc(target)) {
+            Messages.send(attacker, "<red>NPC 受到服主 E.G.O. 保护");
+            return;
+        }
         if (target instanceof Player victim && ServerOwnerGuard.isProtected(plugin, attacker, victim)) {
             Messages.send(attacker, "<red>目标受到服主 E.G.O. 保护");
             return;
