@@ -26,7 +26,7 @@ class EgoSetBonusTest {
             10,
             1.0D,
             20.0D,
-            5.0D);
+            10.0D);
 
     @Test
     void appliesPierceThresholdsWithoutRegressingAtHigherPieceCounts() {
@@ -57,9 +57,10 @@ class EgoSetBonusTest {
     }
 
     @Test
-    void fullSetBlocksRawDamageStrictlyBelowFive() {
-        assertTrue(paradise.blocksDamage(4.999D, 4));
-        assertFalse(paradise.blocksDamage(5.0D, 4));
-        assertFalse(paradise.blocksDamage(4.999D, 3));
+    void fullSetBlocksRawDamageAtOrBelowTen() {
+        assertTrue(paradise.blocksDamage(9.999D, 4));
+        assertTrue(paradise.blocksDamage(10.0D, 4));
+        assertFalse(paradise.blocksDamage(10.001D, 4));
+        assertFalse(paradise.blocksDamage(10.0D, 3));
     }
 }
